@@ -4,13 +4,19 @@ from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-# Keep the environment file at the repository root so Docker and the API
-# use the same local configuration.
+# Keep local configuration in one place at the root of the project.
 ROOT_ENV_FILE = Path(__file__).resolve().parents[3] / ".env"
 
 
 class Settings(BaseSettings):
     database_url: str
+
+    dvsa_client_id: str | None = None
+    dvsa_client_secret: str | None = None
+    dvsa_api_key: str | None = None
+    dvsa_scope: str | None = None
+    dvsa_token_url: str | None = None
+    dvsa_base_url: str = "https://history.mot.api.gov.uk"
 
     model_config = SettingsConfigDict(
         env_file=ROOT_ENV_FILE,
