@@ -1,25 +1,22 @@
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+# Keep the environment file at the repository root so Docker and the API
+# use the same local configuration.
+ROOT_ENV_FILE = Path(__file__).resolve().parents[3] / ".env"
+
+
 class Settings(BaseSettings):
-    app_name: str = "MyGarage UK API"
-    api_v1_prefix: str = "/api/v1"
-    database_url: str = (
-        "postgresql+psycopg://mygarage:mygarage_dev_password@localhost:5432/mygarage"
-    )
-    cors_origins: str = "http://localhost:3000"
+    database_url: str
 
     model_config = SettingsConfigDict(
-        env_file=(".env", "../.env"),
+        env_file=ROOT_ENV_FILE,
         env_file_encoding="utf-8",
         extra="ignore",
     )
-
-    @property
-    def cors_origin_list(self) -> list[str]:
-        return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
 
 
 @lru_cache

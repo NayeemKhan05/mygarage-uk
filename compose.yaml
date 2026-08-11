@@ -1,19 +1,21 @@
 services:
   db:
     image: postgres:17-alpine
+    container_name: mygarage-db
+    restart: unless-stopped
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-mygarage}
-      POSTGRES_USER: ${POSTGRES_USER:-mygarage}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mygarage_dev_password}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - mygarage_postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-mygarage} -d ${POSTGRES_DB:-mygarage}"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 5
 
 volumes:
-  postgres_data:
+  mygarage_postgres_data:
