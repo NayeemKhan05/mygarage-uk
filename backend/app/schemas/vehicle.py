@@ -7,6 +7,30 @@ from pydantic import (
     field_validator,
 )
 
+from app.schemas.mot import MotTestRead
+
+
+def normalise_registration(value: str) -> str:
+    if not isinstance(value, str):
+        raise ValueError("Registration must be a string")
+
+    registration = "".join(
+        value.upper().split()
+    )
+
+    if not registration:
+        raise ValueError("Registration cannot be empty")
+
+    if len(registration) > 8:
+        raise ValueError("Registration is too long")
+
+    if not registration.isalnum():
+        raise ValueError(
+            "Registration must only contain letters and numbers"
+        )
+
+    return registration
+
 
 class VehicleRegistration(BaseModel):
     registration: str = Field(
@@ -14,28 +38,16 @@ class VehicleRegistration(BaseModel):
         max_length=8,
     )
 
-    @field_validator("registration", mode="before")
+    @field_validator(
+        "registration",
+        mode="before",
+    )
     @classmethod
-    def normalise_registration(
+    def validate_registration(
         cls,
         value: str,
     ) -> str:
-        if not isinstance(value, str):
-            raise ValueError(
-                "Registration must be a string"
-            )
-
-        # Keep registrations in one consistent format.
-        registration = "".join(
-            value.upper().split()
-        )
-
-        if not registration.isalnum():
-            raise ValueError(
-                "Registration must only contain letters and numbers"
-            )
-
-        return registration
+        return normalise_registration(value)
 
 
 class VehicleBase(VehicleRegistration):
@@ -75,7 +87,7 @@ class VehicleCreate(VehicleBase):
     pass
 
 
-class VehicleImportRequest(VehicleRegistration):
+class VehicleLookupRequest(VehicleRegistration):
     pass
 
 
@@ -85,10 +97,19 @@ class VehicleRead(VehicleBase):
     updated_at: datetime
 
     model_config = ConfigDict(
-        from_attributes=True
+        from_attributes=True,
     )
 
 
 class VehicleImportResponse(BaseModel):
     vehicle: VehicleRead
     mot_tests_found: int
+    mot_tests_saved: int
+
+
+class VehicleCheckResponse(VehicleBase):
+    mot_tests_found: int
+    mot_tests: list[MotTestRead]
+
+    in_garage: bool
+    garage_vehicle_id: int | None = None

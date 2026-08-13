@@ -9,26 +9,31 @@ from fastapi import (
 )
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import (
+    Session,
+    selectinload,
+)
 
+from app.api.v1.dvsa import fetch_dvsa_vehicle
 from app.db.session import get_db
+from app.models.mot import MotTest
 from app.models.vehicle import Vehicle
+from app.schemas.mot import (
+    MotHistoryRefreshResponse,
+    MotTestRead,
+)
 from app.schemas.vehicle import (
     VehicleCreate,
-    VehicleImportRequest,
     VehicleImportResponse,
+    VehicleLookupRequest,
     VehicleRead,
 )
 from app.services.dvsa_client import (
-    DvsaAuthenticationError,
-    DvsaBadRequestError,
     DvsaClient,
-    DvsaConfigurationError,
-    DvsaError,
-    DvsaRateLimitError,
-    DvsaUnavailableError,
-    DvsaVehicleNotFoundError,
     get_dvsa_client,
+)
+from app.services.mot_history import (
+    save_mot_history,
 )
 
 
@@ -85,7 +90,7 @@ def create_vehicle(
     status_code=status.HTTP_201_CREATED,
 )
 def import_vehicle(
-    payload: VehicleImportRequest,
+    payload: VehicleLookupRequest,
     db: DbSession,
     dvsa: DvsaService,
 ) -> VehicleImportResponse:
@@ -105,62 +110,16 @@ def import_vehicle(
             ),
         )
 
-    try:
-        dvsa_vehicle = (
-            dvsa.get_vehicle_by_registration(
-                payload.registration
-            )
-        )
-
-    except DvsaBadRequestError:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="DVSA rejected this registration",
-        )
-
-    except DvsaVehicleNotFoundError:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Vehicle not found in DVSA records",
-        )
-
-    except DvsaConfigurationError:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="DVSA integration is not configured",
-        )
-
-    except DvsaRateLimitError:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=(
-                "DVSA is temporarily rate limiting requests"
-            ),
-        )
-
-    except (
-        DvsaAuthenticationError,
-        DvsaUnavailableError,
-        DvsaError,
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=(
-                "Could not retrieve vehicle data from DVSA"
-            ),
-        )
+    dvsa_vehicle = fetch_dvsa_vehicle(
+        dvsa,
+        payload.registration,
+    )
 
     if not dvsa_vehicle.make or not dvsa_vehicle.model:
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail="DVSA returned incomplete vehicle data",
         )
-
-    vehicle_date = (
-        dvsa_vehicle.manufacture_date
-        or dvsa_vehicle.first_used_date
-        or dvsa_vehicle.registration_date
-    )
 
     vehicle = Vehicle(
         registration=payload.registration,
@@ -169,16 +128,21 @@ def import_vehicle(
         fuel_type=dvsa_vehicle.fuel_type,
         engine_size=dvsa_vehicle.engine_size,
         colour=dvsa_vehicle.primary_colour,
-        year=(
-            vehicle_date.year
-            if vehicle_date
-            else None
-        ),
+        year=dvsa_vehicle.year,
     )
 
     db.add(vehicle)
 
     try:
+        # We need the vehicle ID before its MOT tests can reference it.
+        db.flush()
+
+        mot_tests_saved = save_mot_history(
+            db,
+            vehicle,
+            dvsa_vehicle.mot_tests,
+        )
+
         db.commit()
 
     except IntegrityError:
@@ -199,6 +163,7 @@ def import_vehicle(
         mot_tests_found=len(
             dvsa_vehicle.mot_tests
         ),
+        mot_tests_saved=mot_tests_saved,
     )
 
 
@@ -215,6 +180,86 @@ def list_vehicles(
 
     return list(
         db.scalars(statement).all()
+    )
+
+
+@router.get(
+    "/{vehicle_id}/mot-history",
+    response_model=list[MotTestRead],
+)
+def get_vehicle_mot_history(
+    vehicle_id: int,
+    db: DbSession,
+) -> list[MotTest]:
+    vehicle = db.get(
+        Vehicle,
+        vehicle_id,
+    )
+
+    if vehicle is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Vehicle not found",
+        )
+
+    statement = (
+        select(MotTest)
+        .options(
+            selectinload(MotTest.defects)
+        )
+        .where(
+            MotTest.vehicle_id == vehicle_id
+        )
+        .order_by(
+            MotTest.completed_at.desc()
+        )
+    )
+
+    return list(
+        db.scalars(statement).all()
+    )
+
+
+@router.post(
+    "/{vehicle_id}/mot-history/refresh",
+    response_model=MotHistoryRefreshResponse,
+)
+def refresh_vehicle_mot_history(
+    vehicle_id: int,
+    db: DbSession,
+    dvsa: DvsaService,
+) -> MotHistoryRefreshResponse:
+    vehicle = db.get(
+        Vehicle,
+        vehicle_id,
+    )
+
+    if vehicle is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Vehicle not found",
+        )
+
+    dvsa_vehicle = fetch_dvsa_vehicle(
+        dvsa,
+        vehicle.registration,
+    )
+
+    mot_tests_saved = save_mot_history(
+        db,
+        vehicle,
+        dvsa_vehicle.mot_tests,
+    )
+
+    db.commit()
+
+    return MotHistoryRefreshResponse(
+        vehicle_id=vehicle.id,
+        registration=vehicle.registration,
+        mot_tests_found=len(
+            dvsa_vehicle.mot_tests
+        ),
+        mot_tests_saved=mot_tests_saved,
     )
 
 

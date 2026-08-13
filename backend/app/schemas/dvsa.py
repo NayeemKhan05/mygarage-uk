@@ -1,7 +1,79 @@
-from datetime import date
-from typing import Any
+from datetime import date, datetime
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import (
+    AliasChoices,
+    BaseModel,
+    ConfigDict,
+    Field,
+)
+
+
+class DvsaDefect(BaseModel):
+    dangerous: bool = False
+    text: str = ""
+    type: str
+
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+
+
+class DvsaMotTest(BaseModel):
+    mot_test_number: str | int = Field(
+        alias="motTestNumber",
+    )
+
+    completed_at: datetime = Field(
+        alias="completedDate",
+    )
+
+    data_source: str | None = Field(
+        default=None,
+        alias="dataSource",
+    )
+
+    expiry_date: date | None = Field(
+        default=None,
+        alias="expiryDate",
+    )
+
+    # DVSA documentation has used both names, so accepting both
+    registration_at_time_of_test: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices(
+            "registrationAtTimeOfTest",
+            "regMarkTimeOfTest",
+        ),
+    )
+
+    test_result: str | None = Field(
+        default=None,
+        alias="testResult",
+    )
+
+    odometer_value: str | int | None = Field(
+        default=None,
+        alias="odometerValue",
+    )
+
+    odometer_unit: str | None = Field(
+        default=None,
+        alias="odometerUnit",
+    )
+
+    odometer_result_type: str | None = Field(
+        default=None,
+        alias="odometerResultType",
+    )
+
+    defects: list[DvsaDefect] = Field(
+        default_factory=list,
+    )
+
+    model_config = ConfigDict(
+        populate_by_name=True,
+        extra="ignore",
+    )
 
 
 class DvsaVehicle(BaseModel):
@@ -40,7 +112,7 @@ class DvsaVehicle(BaseModel):
         alias="manufactureDate",
     )
 
-    mot_tests: list[dict[str, Any]] = Field(
+    mot_tests: list[DvsaMotTest] = Field(
         default_factory=list,
         alias="motTests",
     )
@@ -49,3 +121,13 @@ class DvsaVehicle(BaseModel):
         populate_by_name=True,
         extra="ignore",
     )
+
+    @property
+    def year(self) -> int | None:
+        vehicle_date = (
+            self.manufacture_date
+            or self.first_used_date
+            or self.registration_date
+        )
+
+        return vehicle_date.year if vehicle_date else None
