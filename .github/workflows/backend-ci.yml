@@ -2,14 +2,14 @@ name: Backend tests
 
 on:
   push:
-    paths:
-      - "backend/**"
-      - ".github/workflows/backend-ci.yml"
+    branches:
+      - main
 
   pull_request:
-    paths:
-      - "backend/**"
-      - ".github/workflows/backend-ci.yml"
+    branches:
+      - main
+
+  workflow_dispatch:
 
 jobs:
   test:
@@ -20,8 +20,7 @@ jobs:
         working-directory: backend
 
     env:
-      # The tests use their own temporary database, but the app still expects
-      # a database URL when it first loads.
+      # The app needs a database URL when it starts during the tests.
       DATABASE_URL: sqlite+pysqlite:///:memory:
 
     steps:
