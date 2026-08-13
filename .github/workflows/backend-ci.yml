@@ -21,7 +21,7 @@ jobs:
 
     env:
       # The app needs a database URL when it starts during the tests.
-      DATABASE_URL: sqlite+pysqlite:///:memory:
+      DATABASE_URL: "sqlite+pysqlite:///:memory:"
 
     steps:
       - name: Check out repository
