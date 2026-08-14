@@ -130,7 +130,6 @@ a {
   place-items: center;
 
   border-radius: 9px;
-
   background: var(--plate);
   color: #111;
 
@@ -288,6 +287,12 @@ a {
 
 .registration-field input::placeholder {
   color: rgba(0, 0, 0, 0.34);
+}
+
+
+/* Once the user clicks the plate box, get the example text out of the way. */
+.registration-field input:focus::placeholder {
+  color: transparent;
 }
 
 
@@ -823,7 +828,6 @@ a {
 .chart-guide-line {
   stroke: #eceeeb;
   stroke-width: 1;
-
   stroke-dasharray: 4 5;
 }
 
@@ -946,9 +950,15 @@ a {
   bottom: 0;
   left: 0;
 
-  width: 3px;
+  width: 4px;
 
   background: transparent;
+}
+
+
+/* Passes and failures use the same visual treatment, just different colours. */
+.mot-history-row.mot-pass::before {
+  background: #2e7d3b;
 }
 
 
@@ -1146,6 +1156,12 @@ a {
 }
 
 
+/* PRS means the issue was repaired at the test station before the pass was recorded. */
+.mot-defect-group.prs {
+  border-color: #2e7d3b;
+}
+
+
 .mot-defect-heading {
   display: flex;
   align-items: center;
@@ -1186,6 +1202,12 @@ a {
 }
 
 
+.mot-defect-group.prs
+.mot-defect-heading strong {
+  color: #23703a;
+}
+
+
 .mot-defect-dot {
   width: 7px;
   height: 7px;
@@ -1215,6 +1237,11 @@ a {
 
 .mot-defect-dot.advisory {
   background: var(--blue);
+}
+
+
+.mot-defect-dot.prs {
+  background: #2e7d3b;
 }
 
 
@@ -1472,7 +1499,7 @@ a {
   }
 
 
-  .mot-history-row.mot-fail::before {
+  .mot-history-row::before {
     width: 4px;
   }
 

@@ -48,13 +48,21 @@ function groupDefects(
       defect.type.toUpperCase() === "ADVISORY",
   );
 
+  const prs = defects.filter(
+    (defect) =>
+      defect.type.toUpperCase() === "PRS",
+  );
+
   const knownDefects = new Set([
     ...dangerous,
     ...major,
     ...minor,
     ...advisory,
+    ...prs,
   ]);
 
+  // This should rarely appear, but keeping a fallback means the UI
+  // will still cope if DVSA adds another defect type in future.
   const other = defects.filter(
     (defect) => !knownDefects.has(defect),
   );
@@ -81,7 +89,12 @@ function groupDefects(
       defects: advisory,
     },
     {
-      title: "Other items",
+      title: "Repaired during MOT",
+      tone: "prs",
+      defects: prs,
+    },
+    {
+      title: "Other recorded items",
       tone: "other",
       defects: other,
     },
