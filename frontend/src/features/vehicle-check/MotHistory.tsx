@@ -1,13 +1,11 @@
-"use client";
-
-import { useState } from "react";
-
-import type { MotTest } from "../../types/vehicle";
+import type {
+  MotDefect,
+  MotTest,
+} from "../../types/vehicle";
 
 import {
   formatDate,
   formatMileage,
-  getDefectTone,
   getMileageChange,
   sortMotTests,
 } from "./utils";
@@ -18,24 +16,86 @@ interface MotHistoryProps {
 }
 
 
-const INITIAL_TEST_COUNT = 8;
+interface DefectGroup {
+  title: string;
+  tone: string;
+  defects: MotDefect[];
+}
+
+
+function groupDefects(
+  defects: MotDefect[],
+): DefectGroup[] {
+  const dangerous = defects.filter(
+    (defect) =>
+      defect.dangerous ||
+      defect.type.toUpperCase() === "DANGEROUS",
+  );
+
+  const major = defects.filter(
+    (defect) =>
+      defect.type.toUpperCase() === "MAJOR" &&
+      !dangerous.includes(defect),
+  );
+
+  const minor = defects.filter(
+    (defect) =>
+      defect.type.toUpperCase() === "MINOR",
+  );
+
+  const advisory = defects.filter(
+    (defect) =>
+      defect.type.toUpperCase() === "ADVISORY",
+  );
+
+  const knownDefects = new Set([
+    ...dangerous,
+    ...major,
+    ...minor,
+    ...advisory,
+  ]);
+
+  const other = defects.filter(
+    (defect) => !knownDefects.has(defect),
+  );
+
+  return [
+    {
+      title: "Dangerous defects",
+      tone: "dangerous",
+      defects: dangerous,
+    },
+    {
+      title: "Major defects",
+      tone: "major",
+      defects: major,
+    },
+    {
+      title: "Minor defects",
+      tone: "minor",
+      defects: minor,
+    },
+    {
+      title: "Advisories",
+      tone: "advisory",
+      defects: advisory,
+    },
+    {
+      title: "Other items",
+      tone: "other",
+      defects: other,
+    },
+  ].filter(
+    (group) => group.defects.length > 0,
+  );
+}
 
 
 export default function MotHistory({
   motTests,
 }: MotHistoryProps) {
-  const [showAll, setShowAll] =
-    useState(false);
-
   const sortedTests =
     sortMotTests(motTests);
-
-  const visibleTests = showAll
-    ? sortedTests
-    : sortedTests.slice(
-        0,
-        INITIAL_TEST_COUNT,
-      );
 
   if (sortedTests.length === 0) {
     return (
@@ -59,7 +119,7 @@ export default function MotHistory({
   }
 
   return (
-    <section className="panel">
+    <section className="panel mot-history-panel">
       <div className="section-heading">
         <div>
           <span className="eyebrow">
@@ -74,15 +134,22 @@ export default function MotHistory({
         </span>
       </div>
 
-      <div className="mot-list">
-        {visibleTests.map(
-          (test, index) => {
-            const passed =
-              test.test_result?.toUpperCase() ===
-              "PASSED";
+      <div className="mot-table-header">
+        <span>Date</span>
+        <span>Result</span>
+        <span>Details</span>
+      </div>
 
-            // The list is newest first, so the next item is the MOT
-            // that happened immediately before this one.
+      <div className="mot-history-list">
+        {sortedTests.map(
+          (test, index) => {
+            const result =
+              test.test_result?.toUpperCase() ??
+              "UNKNOWN";
+
+            const passed =
+              result === "PASSED";
+
             const previousTest =
               sortedTests[index + 1];
 
@@ -92,18 +159,61 @@ export default function MotHistory({
                 previousTest,
               );
 
+            const defectGroups =
+              groupDefects(test.defects);
+
             return (
-              <details
-                className="mot-card"
+              <article
+                className={`mot-history-row ${
+                  passed
+                    ? "mot-pass"
+                    : "mot-fail"
+                }`}
                 key={test.mot_test_number}
-                open={index === 0}
               >
-                <summary className="mot-summary">
-                  <div className="mot-date">
-                    <strong>
-                      {formatDate(
+                <div className="mot-history-date">
+                  <strong>
+                    {formatDate(
+                      test.completed_at,
+                    )}
+                  </strong>
+
+                  <span>
+                    {new Intl.DateTimeFormat(
+                      "en-GB",
+                      {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        hour12: false,
+                      },
+                    ).format(
+                      new Date(
                         test.completed_at,
-                      )}
+                      ),
+                    )}
+                  </span>
+                </div>
+
+                <div className="mot-history-result">
+                  <span
+                    className={
+                      passed
+                        ? "mot-result-box pass"
+                        : "mot-result-box fail"
+                    }
+                  >
+                    {passed
+                      ? "Pass"
+                      : result === "FAILED"
+                        ? "Fail"
+                        : result}
+                  </span>
+                </div>
+
+                <div className="mot-history-details">
+                  <div className="mot-mileage-line">
+                    <strong>
+                      Mileage:
                     </strong>
 
                     <span>
@@ -112,137 +222,99 @@ export default function MotHistory({
                         test.odometer_unit,
                       )}
                     </span>
-
-                    <span
-                      className={`mileage-change ${mileageChange.tone}`}
-                    >
-                      {mileageChange.label}
-                    </span>
                   </div>
 
-                  <div className="mot-summary-right">
-                    <span
-                      className={
-                        passed
-                          ? "result-badge passed"
-                          : "result-badge failed"
-                      }
-                    >
-                      {passed
-                        ? "Passed"
-                        : test.test_result ??
-                          "Unknown"}
-                    </span>
-
-                    <span className="defect-count">
-                      {test.defects.length === 0
-                        ? "No defects"
-                        : `${test.defects.length} ${
-                            test.defects.length ===
-                            1
-                              ? "item"
-                              : "items"
-                          }`}
-                    </span>
-
-                    <span
-                      className="mot-chevron"
-                      aria-hidden="true"
-                    >
-                      +
-                    </span>
+                  <div
+                    className={`mot-mileage-change ${mileageChange.tone}`}
+                  >
+                    {mileageChange.label}
                   </div>
-                </summary>
 
-                <div className="mot-content">
-                  <div className="mot-details-grid">
-                    <div>
-                      <span>
-                        Expiry
-                      </span>
-
+                  {test.expiry_date && passed && (
+                    <div className="mot-expiry-line">
                       <strong>
+                        MOT valid until:
+                      </strong>
+
+                      <span>
                         {formatDate(
                           test.expiry_date,
                         )}
-                      </strong>
-                    </div>
-
-                    <div>
-                      <span>
-                        Test number
                       </span>
-
-                      <strong>
-                        {test.mot_test_number}
-                      </strong>
                     </div>
+                  )}
 
-                    <div>
-                      <span>
-                        Registration
-                      </span>
-
-                      <strong>
-                        {test.registration_at_time_of_test ??
-                          "Not recorded"}
-                      </strong>
-                    </div>
-                  </div>
-
-                  {test.defects.length === 0 ? (
-                    <div className="clean-mot">
+                  {defectGroups.length === 0 ? (
+                    <div className="mot-clean-result">
                       No defects or advisories
-                      were recorded on this test.
+                      recorded.
                     </div>
                   ) : (
-                    <div className="defects">
-                      {test.defects.map(
-                        (
-                          defect,
-                          defectIndex,
-                        ) => (
+                    <div className="mot-defect-groups">
+                      {defectGroups.map(
+                        (group) => (
                           <div
-                            className={`defect ${getDefectTone(
-                              defect,
-                            )}`}
-                            key={`${test.mot_test_number}-${defectIndex}`}
+                            className={`mot-defect-group ${group.tone}`}
+                            key={group.title}
                           >
-                            <span className="defect-type">
-                              {defect.type}
-                            </span>
+                            <div className="mot-defect-heading">
+                              <span
+                                className={`mot-defect-dot ${group.tone}`}
+                              />
 
-                            <p>
-                              {defect.text}
-                            </p>
+                              <strong>
+                                {group.title}
+                              </strong>
+
+                              <span className="mot-defect-total">
+                                {
+                                  group.defects
+                                    .length
+                                }
+                              </span>
+                            </div>
+
+                            <ul>
+                              {group.defects.map(
+                                (
+                                  defect,
+                                  defectIndex,
+                                ) => (
+                                  <li
+                                    key={`${test.mot_test_number}-${group.title}-${defectIndex}`}
+                                  >
+                                    {defect.text}
+                                  </li>
+                                ),
+                              )}
+                            </ul>
                           </div>
                         ),
                       )}
                     </div>
                   )}
+
+                  <div className="mot-record-meta">
+                    <span>
+                      Test number:{" "}
+                      {test.mot_test_number}
+                    </span>
+
+                    {test.registration_at_time_of_test && (
+                      <span>
+                        Registration:{" "}
+                        {
+                          test.registration_at_time_of_test
+                        }
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </details>
+              </article>
             );
           },
         )}
       </div>
-
-      {sortedTests.length >
-        INITIAL_TEST_COUNT && (
-        <button
-          className="show-history-button"
-          type="button"
-          onClick={() =>
-            setShowAll(
-              (current) => !current,
-            )
-          }
-        >
-          {showAll
-            ? "Show less"
-            : `Show all ${sortedTests.length} MOT tests`}
-        </button>
-      )}
     </section>
   );
 }
