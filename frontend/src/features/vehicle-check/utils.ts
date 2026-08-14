@@ -58,7 +58,9 @@ export function formatMileage(
   }
 
   const formatted =
-    new Intl.NumberFormat("en-GB").format(value);
+    new Intl.NumberFormat(
+      "en-GB",
+    ).format(value);
 
   if (!unit) {
     return formatted;
@@ -78,8 +80,12 @@ export function sortMotTests(
 ): MotTest[] {
   return [...tests].sort(
     (a, b) =>
-      new Date(b.completed_at).getTime() -
-      new Date(a.completed_at).getTime(),
+      new Date(
+        b.completed_at,
+      ).getTime() -
+      new Date(
+        a.completed_at,
+      ).getTime(),
   );
 }
 
@@ -90,13 +96,17 @@ export function getLatestMileage(
   value: number | null;
   unit: string | null;
 } {
-  const test = sortMotTests(tests).find(
-    (item) => item.odometer_value !== null,
-  );
+  const test =
+    sortMotTests(tests).find(
+      (item) =>
+        item.odometer_value !== null,
+    );
 
   return {
-    value: test?.odometer_value ?? null,
-    unit: test?.odometer_unit ?? null,
+    value:
+      test?.odometer_value ?? null,
+    unit:
+      test?.odometer_unit ?? null,
   };
 }
 
@@ -106,39 +116,50 @@ export function getMileageChange(
   previousTest: MotTest | undefined,
 ): {
   label: string;
-  tone: "positive" | "negative" | "neutral" | "unavailable";
+  tone:
+    | "positive"
+    | "negative"
+    | "neutral"
+    | "unavailable";
 } {
   if (!previousTest) {
     return {
-      label: "No earlier MOT mileage",
+      label:
+        "No earlier MOT mileage",
       tone: "unavailable",
     };
   }
 
   if (
-    currentTest.odometer_value === null ||
-    previousTest.odometer_value === null
+    currentTest.odometer_value ===
+      null ||
+    previousTest.odometer_value ===
+      null
   ) {
     return {
-      label: "Mileage change unavailable",
+      label:
+        "Mileage change unavailable",
       tone: "unavailable",
     };
   }
 
   const currentUnit =
-    currentTest.odometer_unit?.toUpperCase();
+    currentTest.odometer_unit
+      ?.toUpperCase();
 
   const previousUnit =
-    previousTest.odometer_unit?.toUpperCase();
+    previousTest.odometer_unit
+      ?.toUpperCase();
 
-  // We should not compare readings if DVSA recorded them in different units.
+  // Readings in different units should not be compared.
   if (
     currentUnit &&
     previousUnit &&
     currentUnit !== previousUnit
   ) {
     return {
-      label: "Mileage change unavailable",
+      label:
+        "Mileage change unavailable",
       tone: "unavailable",
     };
   }
@@ -150,29 +171,35 @@ export function getMileageChange(
   const unit =
     currentUnit === "MI"
       ? "mi"
-      : currentUnit?.toLowerCase() ?? "";
+      : currentUnit?.toLowerCase() ??
+        "";
 
   const formattedDifference =
-    new Intl.NumberFormat("en-GB").format(
+    new Intl.NumberFormat(
+      "en-GB",
+    ).format(
       Math.abs(difference),
     );
 
   if (difference > 0) {
     return {
-      label: `+${formattedDifference} ${unit} since previous MOT`.trim(),
+      label:
+        `+${formattedDifference} ${unit} since previous MOT`.trim(),
       tone: "positive",
     };
   }
 
   if (difference < 0) {
     return {
-      label: `-${formattedDifference} ${unit} vs previous MOT`.trim(),
+      label:
+        `-${formattedDifference} ${unit} vs previous MOT`.trim(),
       tone: "negative",
     };
   }
 
   return {
-    label: `No mileage change since previous MOT`,
+    label:
+      "No mileage change since previous MOT",
     tone: "neutral",
   };
 }
@@ -183,37 +210,117 @@ export function getCurrentMot(
 ): {
   label: string;
   expiryDate: string | null;
-  tone: "good" | "bad" | "neutral";
+  daysRemaining: number | null;
+  timeRemainingLabel: string;
+  tone:
+    | "good"
+    | "warning"
+    | "bad"
+    | "neutral";
 } {
-  const passedTests = sortMotTests(tests).filter(
-    (test) =>
-      test.test_result?.toUpperCase() ===
-        "PASSED" &&
-      test.expiry_date,
-  );
+  const passedTests =
+    sortMotTests(tests).filter(
+      (test) =>
+        test.test_result
+          ?.toUpperCase() ===
+          "PASSED" &&
+        test.expiry_date,
+    );
 
-  const latestPassed = passedTests[0];
+  const latestPassed =
+    passedTests[0];
 
-  if (!latestPassed?.expiry_date) {
+  if (
+    !latestPassed?.expiry_date
+  ) {
     return {
       label: "No MOT data",
       expiryDate: null,
+      daysRemaining: null,
+      timeRemainingLabel:
+        "No expiry available",
       tone: "neutral",
     };
   }
 
-  const expiry = new Date(
-    `${latestPassed.expiry_date}T23:59:59`,
+  const today = new Date();
+
+  today.setHours(
+    0,
+    0,
+    0,
+    0,
   );
 
-  const valid = expiry.getTime() >= Date.now();
+  const expiry = new Date(
+    `${latestPassed.expiry_date}T00:00:00`,
+  );
+
+  const millisecondsPerDay =
+    1000 * 60 * 60 * 24;
+
+  const daysRemaining =
+    Math.round(
+      (
+        expiry.getTime() -
+        today.getTime()
+      ) /
+        millisecondsPerDay,
+    );
+
+  if (daysRemaining < 0) {
+    const daysExpired =
+      Math.abs(daysRemaining);
+
+    return {
+      label: "MOT expired",
+      expiryDate:
+        latestPassed.expiry_date,
+      daysRemaining,
+      timeRemainingLabel:
+        daysExpired === 1
+          ? "Expired yesterday"
+          : `Expired ${daysExpired} days ago`,
+      tone: "bad",
+    };
+  }
+
+  if (daysRemaining === 0) {
+    return {
+      label:
+        "MOT expires today",
+      expiryDate:
+        latestPassed.expiry_date,
+      daysRemaining,
+      timeRemainingLabel:
+        "Expires today",
+      tone: "warning",
+    };
+  }
+
+  if (daysRemaining <= 30) {
+    return {
+      label:
+        "MOT expires soon",
+      expiryDate:
+        latestPassed.expiry_date,
+      daysRemaining,
+      timeRemainingLabel:
+        daysRemaining === 1
+          ? "1 day left"
+          : `${daysRemaining} days left`,
+      tone: "warning",
+    };
+  }
 
   return {
-    label: valid
-      ? "MOT valid"
-      : "MOT expired",
-    expiryDate: latestPassed.expiry_date,
-    tone: valid ? "good" : "bad",
+    label: "MOT valid",
+    expiryDate:
+      latestPassed.expiry_date,
+    daysRemaining,
+    timeRemainingLabel:
+      `${daysRemaining} days left`,
+    tone: "good",
   };
 }
 
@@ -221,7 +328,8 @@ export function getCurrentMot(
 export function getDefectTone(
   defect: MotDefect,
 ): string {
-  const type = defect.type.toUpperCase();
+  const type =
+    defect.type.toUpperCase();
 
   if (
     type === "DANGEROUS" ||
@@ -240,6 +348,10 @@ export function getDefectTone(
 
   if (type === "ADVISORY") {
     return "advisory";
+  }
+
+  if (type === "PRS") {
+    return "prs";
   }
 
   return "other";

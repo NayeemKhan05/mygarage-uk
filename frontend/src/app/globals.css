@@ -12,6 +12,9 @@
   --red: #a43232;
   --red-light: #f7e7e5;
 
+  --orange: #b26100;
+  --orange-light: #fff0d7;
+
   --amber: #8d6500;
   --amber-light: #f8efcf;
 
@@ -19,6 +22,15 @@
   --blue-light: #e7eef8;
 
   --plate: #f5cd25;
+
+  --plate-font:
+    "Charles Wright 2001",
+    "Charles Wright",
+    "Arial Narrow",
+    "Nimbus Sans Narrow",
+    "Liberation Sans Narrow",
+    Arial,
+    sans-serif;
 
   --radius-small: 10px;
   --radius: 18px;
@@ -42,8 +54,10 @@ html {
 
 body {
   margin: 0;
+
   background: var(--background);
   color: var(--text);
+
   font-family:
     Inter,
     ui-sans-serif,
@@ -51,6 +65,7 @@ body {
     BlinkMacSystemFont,
     "Segoe UI",
     sans-serif;
+
   -webkit-font-smoothing: antialiased;
 }
 
@@ -82,6 +97,8 @@ a {
 }
 
 
+/* Header and navigation */
+
 .site-header {
   position: relative;
   z-index: 10;
@@ -90,34 +107,46 @@ a {
   color: white;
 
   border-bottom:
-    1px solid rgba(255, 255, 255, 0.08);
+    1px solid
+    rgba(255, 255, 255, 0.08);
 }
 
 
 .header-inner {
-  width: min(1180px, calc(100% - 40px));
+  width: min(
+    1180px,
+    calc(100% - 40px)
+  );
+
   height: 76px;
   margin: 0 auto;
 
   display: flex;
   align-items: center;
   justify-content: space-between;
+
+  gap: 30px;
 }
 
 
 .brand {
+  flex: 0 0 auto;
+
   display: flex;
   align-items: center;
+
   gap: 11px;
 
   font-size: 19px;
   font-weight: 650;
+
   letter-spacing: -0.02em;
 }
 
 
 .brand strong {
   font-weight: 450;
+
   opacity: 0.62;
 }
 
@@ -130,28 +159,91 @@ a {
   place-items: center;
 
   border-radius: 9px;
+
   background: var(--plate);
   color: #111;
 
   font-size: 11px;
   font-weight: 800;
+
   letter-spacing: -0.04em;
 }
 
 
-.header-badge {
-  padding: 8px 13px;
+.site-nav {
+  height: 100%;
 
-  border:
-    1px solid rgba(255, 255, 255, 0.13);
+  display: flex;
+  align-items: stretch;
 
-  border-radius: 999px;
-
-  color: rgba(255, 255, 255, 0.75);
-
-  font-size: 13px;
+  gap: 5px;
 }
 
+
+.nav-link {
+  position: relative;
+
+  min-width: 88px;
+  padding: 0 15px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  color:
+    rgba(
+      255,
+      255,
+      255,
+      0.62
+    );
+
+  font-size: 14px;
+  font-weight: 560;
+
+  transition:
+    color 150ms ease,
+    background 150ms ease;
+}
+
+
+.nav-link:hover {
+  color: white;
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.045
+    );
+}
+
+
+.nav-link.active {
+  color: white;
+}
+
+
+.nav-link.active::after {
+  content: "";
+
+  position: absolute;
+
+  left: 15px;
+  right: 15px;
+  bottom: 0;
+
+  height: 3px;
+
+  background: var(--plate);
+
+  border-radius:
+    3px 3px 0 0;
+}
+
+
+/* Homepage */
 
 .hero {
   background:
@@ -167,7 +259,11 @@ a {
 
 
 .hero-inner {
-  width: min(1000px, calc(100% - 40px));
+  width: min(
+    1000px,
+    calc(100% - 40px)
+  );
+
   margin: 0 auto;
   padding: 90px 0 82px;
 
@@ -191,6 +287,7 @@ a {
 
 .hero h1 {
   max-width: 850px;
+
   margin: 17px auto 20px;
 
   font-size: clamp(
@@ -201,15 +298,23 @@ a {
 
   font-weight: 620;
   line-height: 0.98;
+
   letter-spacing: -0.055em;
 }
 
 
 .hero-copy {
   max-width: 620px;
+
   margin: 0 auto;
 
-  color: rgba(255, 255, 255, 0.68);
+  color:
+    rgba(
+      255,
+      255,
+      255,
+      0.68
+    );
 
   font-size: 18px;
   line-height: 1.6;
@@ -217,7 +322,11 @@ a {
 
 
 .registration-search {
-  width: min(690px, 100%);
+  width: min(
+    690px,
+    100%
+  );
+
   margin: 42px auto 0;
 
   display: grid;
@@ -249,6 +358,8 @@ a {
 .plate-strip {
   width: 52px;
 
+  flex: 0 0 auto;
+
   display: grid;
   place-items: center;
 
@@ -270,27 +381,37 @@ a {
   outline: 0;
 
   background: var(--plate);
-  color: #111;
+  color: #050505;
 
   font-family:
-    "Arial Narrow",
-    Arial,
-    sans-serif;
+    var(--plate-font);
 
-  font-size: 27px;
-  font-weight: 800;
+  font-size: 29px;
+  font-weight: 900;
 
-  letter-spacing: 0.09em;
+  font-stretch: condensed;
+
+  letter-spacing: 0.085em;
   text-transform: uppercase;
 }
 
 
 .registration-field input::placeholder {
-  color: rgba(0, 0, 0, 0.34);
+  color:
+    rgba(
+      0,
+      0,
+      0,
+      0.35
+    );
+
+  font-family:
+    var(--plate-font);
+
+  font-weight: 900;
 }
 
 
-/* Once the user clicks the plate box, get the example text out of the way. */
 .registration-field input:focus::placeholder {
   color: transparent;
 }
@@ -313,7 +434,8 @@ a {
 
 
 .primary-button:hover:not(:disabled) {
-  transform: translateY(-1px);
+  transform:
+    translateY(-1px);
 }
 
 
@@ -324,6 +446,7 @@ a {
 
 .search-button {
   min-width: 155px;
+
   padding: 0 23px;
 }
 
@@ -331,7 +454,13 @@ a {
 .search-note {
   margin: 15px 0 0;
 
-  color: rgba(255, 255, 255, 0.48);
+  color:
+    rgba(
+      255,
+      255,
+      255,
+      0.48
+    );
 
   font-size: 13px;
 }
@@ -343,7 +472,11 @@ a {
 
 
 .features-inner {
-  width: min(1100px, calc(100% - 40px));
+  width: min(
+    1100px,
+    calc(100% - 40px)
+  );
+
   margin: 0 auto;
 
   display: grid;
@@ -357,14 +490,20 @@ a {
 
 .feature-card {
   min-height: 220px;
+
   padding: 30px;
 
   background: var(--surface);
 
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border:
+    1px solid
+    var(--border);
 
-  box-shadow: var(--shadow);
+  border-radius:
+    var(--radius);
+
+  box-shadow:
+    var(--shadow);
 }
 
 
@@ -373,15 +512,18 @@ a {
 
   font-size: 11px;
   font-weight: 750;
+
   letter-spacing: 0.1em;
 }
 
 
 .feature-card h2 {
-  margin: 46px 0 10px;
+  margin:
+    46px 0 10px;
 
   font-size: 22px;
   font-weight: 650;
+
   letter-spacing: -0.03em;
 }
 
@@ -396,30 +538,43 @@ a {
 }
 
 
+/* Search results */
+
 .results {
   padding: 48px 0 80px;
 }
 
 
 .results-inner {
-  width: min(1050px, calc(100% - 40px));
+  width: min(
+    1050px,
+    calc(100% - 40px)
+  );
+
   margin: 0 auto;
 }
 
 
 .loading-panel {
   min-height: 170px;
+
   padding: 36px;
 
   display: flex;
   align-items: center;
   justify-content: center;
+
   gap: 18px;
 
-  background: var(--surface);
+  background:
+    var(--surface);
 
-  border: 1px solid var(--border);
-  border-radius: var(--radius-large);
+  border:
+    1px solid
+    var(--border);
+
+  border-radius:
+    var(--radius-large);
 }
 
 
@@ -436,6 +591,7 @@ a {
 
 .loading-panel span {
   color: var(--muted);
+
   font-size: 14px;
 }
 
@@ -444,18 +600,25 @@ a {
   width: 28px;
   height: 28px;
 
-  border: 3px solid #dce1dd;
-  border-top-color: var(--green);
+  border:
+    3px solid
+    #dce1dd;
+
+  border-top-color:
+    var(--green);
 
   border-radius: 50%;
 
-  animation: spin 700ms linear infinite;
+  animation:
+    spin 700ms
+    linear infinite;
 }
 
 
 @keyframes spin {
   to {
-    transform: rotate(360deg);
+    transform:
+      rotate(360deg);
   }
 }
 
@@ -474,10 +637,13 @@ a {
 .number-plate {
   display: inline-block;
 
-  padding: 8px 15px;
+  padding:
+    8px 16px 8px 18px;
 
-  background: var(--plate);
-  color: #111;
+  background:
+    var(--plate);
+
+  color: #050505;
 
   border-radius: 7px;
 
@@ -486,19 +652,22 @@ a {
     rgba(0, 0, 0, 0.08);
 
   font-family:
-    "Arial Narrow",
-    Arial,
-    sans-serif;
+    var(--plate-font);
 
-  font-size: 20px;
-  font-weight: 800;
+  font-size: 22px;
+  font-weight: 900;
 
-  letter-spacing: 0.08em;
+  font-stretch: condensed;
+
+  letter-spacing: 0.085em;
+
+  line-height: 1.15;
 }
 
 
 .vehicle-title {
-  margin: 16px 0 8px;
+  margin:
+    16px 0 8px;
 
   font-size: clamp(
     30px,
@@ -507,6 +676,7 @@ a {
   );
 
   font-weight: 650;
+
   letter-spacing: -0.05em;
 }
 
@@ -550,7 +720,9 @@ a {
   border: 0;
   border-radius: 11px;
 
-  background: var(--green);
+  background:
+    var(--green);
+
   color: white;
 
   font-weight: 700;
@@ -558,13 +730,17 @@ a {
 
 
 .garage-button.in-garage {
-  background: var(--green-light);
-  color: var(--green);
+  background:
+    var(--green-light);
+
+  color:
+    var(--green);
 }
 
 
 .garage-caption {
-  color: var(--muted);
+  color:
+    var(--muted);
 
   font-size: 12px;
 }
@@ -572,7 +748,9 @@ a {
 
 .message {
   margin: 18px 0;
-  padding: 13px 16px;
+
+  padding:
+    13px 16px;
 
   border-radius: 10px;
 
@@ -582,26 +760,42 @@ a {
 
 
 .hero .message {
-  width: min(690px, 100%);
-  margin: 18px auto 0;
+  width: min(
+    690px,
+    100%
+  );
+
+  margin:
+    18px auto 0;
 }
 
 
 .error-message {
-  background: var(--red-light);
+  background:
+    var(--red-light);
+
   color: #812727;
 
-  border: 1px solid #eac4c0;
+  border:
+    1px solid
+    #eac4c0;
 }
 
 
 .success-message {
-  background: var(--green-light);
-  color: var(--green);
+  background:
+    var(--green-light);
 
-  border: 1px solid #c8dfd0;
+  color:
+    var(--green);
+
+  border:
+    1px solid
+    #c8dfd0;
 }
 
+
+/* Summary cards */
 
 .stats-grid {
   margin-bottom: 20px;
@@ -616,28 +810,36 @@ a {
 
 
 .stat-card {
-  min-height: 148px;
+  min-height: 155px;
+
   padding: 23px;
 
   display: flex;
   flex-direction: column;
 
-  background: var(--surface);
+  background:
+    var(--surface);
 
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border:
+    1px solid
+    var(--border);
+
+  border-radius:
+    var(--radius);
 }
 
 
 .stat-label {
   margin-bottom: 25px;
 
-  color: var(--muted);
+  color:
+    var(--muted);
 
   font-size: 12px;
   font-weight: 650;
 
   text-transform: uppercase;
+
   letter-spacing: 0.07em;
 }
 
@@ -645,14 +847,14 @@ a {
 .stat-card strong {
   font-size: 25px;
   font-weight: 660;
+
   letter-spacing: -0.035em;
 }
 
 
 .stat-detail {
-  margin-top: 5px;
-
-  color: var(--muted);
+  color:
+    var(--muted);
 
   font-size: 13px;
 }
@@ -667,17 +869,26 @@ a {
 
 
 .status-text.good {
-  color: var(--green);
+  color:
+    var(--green);
+}
+
+
+.status-text.warning {
+  color:
+    var(--orange);
 }
 
 
 .status-text.bad {
-  color: var(--red);
+  color:
+    var(--red);
 }
 
 
 .status-text.neutral {
-  color: var(--muted);
+  color:
+    var(--muted);
 }
 
 
@@ -685,24 +896,80 @@ a {
   width: 9px;
   height: 9px;
 
+  flex: 0 0 auto;
+
   border-radius: 50%;
 
-  background: currentColor;
+  background:
+    currentColor;
 }
 
 
+.mot-expiry-summary {
+  margin-top: 7px;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 3px;
+}
+
+
+.mot-countdown {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+
+.mot-countdown.good {
+  color:
+    var(--green);
+}
+
+
+.mot-countdown.warning {
+  color:
+    var(--orange);
+}
+
+
+.mot-countdown.bad {
+  color:
+    var(--red);
+}
+
+
+.mot-countdown.neutral {
+  color:
+    var(--muted);
+}
+
+
+/* General panels */
+
 .panel {
   margin-top: 18px;
+
   padding: 27px;
 
-  background: var(--surface);
+  background:
+    var(--surface);
 
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border:
+    1px solid
+    var(--border);
+
+  border-radius:
+    var(--radius);
 
   box-shadow:
     0 8px 30px
-    rgba(25, 35, 28, 0.03);
+    rgba(
+      25,
+      35,
+      28,
+      0.03
+    );
 }
 
 
@@ -722,6 +989,7 @@ a {
 
   font-size: 23px;
   font-weight: 650;
+
   letter-spacing: -0.035em;
 }
 
@@ -732,7 +1000,8 @@ a {
 
 
 .section-meta {
-  color: var(--muted);
+  color:
+    var(--muted);
 
   font-size: 13px;
 }
@@ -751,7 +1020,8 @@ a {
 .latest-mot-grid > div {
   padding: 17px;
 
-  background: var(--surface-soft);
+  background:
+    var(--surface-soft);
 
   border-radius: 11px;
 }
@@ -766,7 +1036,8 @@ a {
 .latest-mot-grid span {
   margin-bottom: 7px;
 
-  color: var(--muted);
+  color:
+    var(--muted);
 
   font-size: 12px;
 }
@@ -794,19 +1065,29 @@ a {
 
 
 .result-badge.passed {
-  background: var(--green-light);
-  color: var(--green);
+  background:
+    var(--green-light);
+
+  color:
+    var(--green);
 }
 
 
 .result-badge.failed {
-  background: var(--red-light);
-  color: var(--red);
+  background:
+    var(--red-light);
+
+  color:
+    var(--red);
 }
 
 
+/* Mileage chart */
+
 .mileage-chart-wrapper {
   overflow-x: auto;
+
+  padding-top: 4px;
 }
 
 
@@ -814,26 +1095,56 @@ a {
   display: block;
 
   width: 100%;
-  min-width: 580px;
+  min-width: 650px;
   height: auto;
+
+  overflow: visible;
 }
 
 
-.chart-grid-line {
-  stroke: #d5d9d4;
+.chart-axis {
+  stroke: #aeb4ad;
+  stroke-width: 1.2;
+}
+
+
+.chart-horizontal-grid {
+  stroke: #e2e5e1;
   stroke-width: 1;
 }
 
 
-.chart-guide-line {
-  stroke: #eceeeb;
+.chart-vertical-grid {
+  stroke: #eef0ed;
   stroke-width: 1;
-  stroke-dasharray: 4 5;
+
+  stroke-dasharray: 3 5;
+}
+
+
+.chart-axis-label {
+  fill: #747b73;
+
+  font-size: 11px;
+  font-weight: 500;
+}
+
+
+.chart-axis-title {
+  fill: #747b73;
+
+  font-size: 11px;
+  font-weight: 650;
+
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 
 .mileage-line {
-  stroke: var(--green);
+  stroke:
+    var(--green);
+
   stroke-width: 3;
 
   stroke-linecap: round;
@@ -841,29 +1152,143 @@ a {
 }
 
 
-.mileage-point {
-  fill: var(--surface);
+.mileage-point-group {
+  outline: none;
 
-  stroke: var(--green);
+  cursor: pointer;
+}
+
+
+.mileage-point {
+  fill:
+    var(--surface);
+
+  stroke:
+    var(--green);
+
+  stroke-width: 3;
+
+  transition:
+    r 120ms ease,
+    fill 120ms ease,
+    stroke-width 120ms ease;
+}
+
+
+.mileage-point.hovered {
+  fill:
+    var(--green);
+
+  stroke: white;
   stroke-width: 3;
 }
 
 
-.chart-label {
-  fill: #7a8078;
+.mileage-point-group:focus
+.mileage-point {
+  fill:
+    var(--green);
+
+  stroke: white;
+  stroke-width: 3;
+}
+
+
+.mileage-hit-area {
+  fill: transparent;
+
+  stroke: none;
+
+  pointer-events: all;
+}
+
+
+.chart-tooltip rect {
+  fill: #10291e;
+
+  stroke:
+    rgba(
+      255,
+      255,
+      255,
+      0.12
+    );
+
+  stroke-width: 1;
+
+  filter:
+    drop-shadow(
+      0 7px 12px
+      rgba(
+        18,
+        29,
+        21,
+        0.18
+      )
+    );
+}
+
+
+.chart-tooltip-mileage {
+  fill: white;
+
+  font-size: 14px;
+  font-weight: 750;
+}
+
+
+.chart-tooltip-detail {
+  fill:
+    rgba(
+      255,
+      255,
+      255,
+      0.7
+    );
 
   font-size: 11px;
+}
+
+
+.chart-tooltip-result {
+  font-size: 10px;
+  font-weight: 750;
+
+  letter-spacing: 0.04em;
+}
+
+
+.chart-tooltip-result.pass {
+  fill: #8dd39b;
+}
+
+
+.chart-tooltip-result.fail {
+  fill: #ef9696;
+}
+
+
+.chart-help {
+  margin:
+    3px 0 0;
+
+  color: #92978f;
+
+  font-size: 11px;
+  text-align: center;
 }
 
 
 .empty-state {
   padding: 35px;
 
-  background: var(--surface-soft);
+  background:
+    var(--surface-soft);
 
   border-radius: 12px;
 
-  color: var(--muted);
+  color:
+    var(--muted);
 
   text-align: center;
 
@@ -871,7 +1296,7 @@ a {
 }
 
 
-/* Keep the MOT history dense so a long vehicle history can be scanned quickly. */
+/* MOT history stays dense so a long history is easy to scan. */
 
 .mot-history-panel {
   padding: 0;
@@ -880,8 +1305,10 @@ a {
 }
 
 
-.mot-history-panel > .section-heading {
+.mot-history-panel >
+.section-heading {
   margin: 0;
+
   padding: 27px;
 }
 
@@ -896,7 +1323,9 @@ a {
 
   padding: 12px 20px;
 
-  background: var(--green);
+  background:
+    var(--green);
+
   color: white;
 
   font-size: 12px;
@@ -925,9 +1354,12 @@ a {
     105px
     minmax(0, 1fr);
 
-  background: var(--surface);
+  background:
+    var(--surface);
 
-  border-top: 1px solid var(--border);
+  border-top:
+    1px solid
+    var(--border);
 }
 
 
@@ -956,19 +1388,20 @@ a {
 }
 
 
-/* Passes and failures use the same visual treatment, just different colours. */
 .mot-history-row.mot-pass::before {
   background: #2e7d3b;
 }
 
 
 .mot-history-row.mot-fail::before {
-  background: var(--red);
+  background:
+    var(--red);
 }
 
 
 .mot-history-date {
-  padding: 21px 16px 21px 20px;
+  padding:
+    21px 16px 21px 20px;
 
   display: flex;
   flex-direction: column;
@@ -984,7 +1417,8 @@ a {
 
 
 .mot-history-date span {
-  color: var(--muted);
+  color:
+    var(--muted);
 
   font-size: 12px;
 }
@@ -1027,7 +1461,9 @@ a {
 .mot-history-details {
   min-width: 0;
 
-  padding: 19px 24px 21px 16px;
+  padding:
+    19px 24px
+    21px 16px;
 }
 
 
@@ -1066,12 +1502,14 @@ a {
 
 
 .mot-mileage-change.negative {
-  color: var(--red);
+  color:
+    var(--red);
 }
 
 
 .mot-mileage-change.neutral {
-  color: var(--muted);
+  color:
+    var(--muted);
 }
 
 
@@ -1090,7 +1528,8 @@ a {
 
   gap: 5px;
 
-  color: var(--muted);
+  color:
+    var(--muted);
 
   font-size: 12px;
 }
@@ -1107,10 +1546,14 @@ a {
   width: fit-content;
 
   margin-top: 13px;
+
   padding: 7px 10px;
 
-  background: var(--green-light);
-  color: var(--green);
+  background:
+    var(--green-light);
+
+  color:
+    var(--green);
 
   border-radius: 7px;
 
@@ -1132,7 +1575,9 @@ a {
 .mot-defect-group {
   padding-left: 12px;
 
-  border-left: 2px solid #d7dbd6;
+  border-left:
+    2px solid
+    #d7dbd6;
 }
 
 
@@ -1142,21 +1587,23 @@ a {
 
 
 .mot-defect-group.major {
-  border-color: var(--red);
+  border-color:
+    var(--red);
 }
 
 
 .mot-defect-group.minor {
-  border-color: var(--amber);
+  border-color:
+    var(--amber);
 }
 
 
 .mot-defect-group.advisory {
-  border-color: var(--blue);
+  border-color:
+    var(--blue);
 }
 
 
-/* PRS means the issue was repaired at the test station before the pass was recorded. */
 .mot-defect-group.prs {
   border-color: #2e7d3b;
 }
@@ -1186,19 +1633,22 @@ a {
 
 .mot-defect-group.major
 .mot-defect-heading strong {
-  color: var(--red);
+  color:
+    var(--red);
 }
 
 
 .mot-defect-group.minor
 .mot-defect-heading strong {
-  color: var(--amber);
+  color:
+    var(--amber);
 }
 
 
 .mot-defect-group.advisory
 .mot-defect-heading strong {
-  color: var(--blue);
+  color:
+    var(--blue);
 }
 
 
@@ -1226,17 +1676,20 @@ a {
 
 
 .mot-defect-dot.major {
-  background: var(--red);
+  background:
+    var(--red);
 }
 
 
 .mot-defect-dot.minor {
-  background: var(--amber);
+  background:
+    var(--amber);
 }
 
 
 .mot-defect-dot.advisory {
-  background: var(--blue);
+  background:
+    var(--blue);
 }
 
 
@@ -1257,7 +1710,9 @@ a {
   border-radius: 999px;
 
   background: #eff1ee;
-  color: var(--muted);
+
+  color:
+    var(--muted);
 
   font-size: 10px;
   font-weight: 750;
@@ -1266,6 +1721,7 @@ a {
 
 .mot-defect-group ul {
   margin: 0;
+
   padding-left: 22px;
 
   color: #4a5049;
@@ -1289,7 +1745,9 @@ a {
 
   gap: 6px 18px;
 
-  border-top: 1px solid #eceeeb;
+  border-top:
+    1px solid
+    #eceeeb;
 
   color: #9a9f98;
 
@@ -1298,7 +1756,8 @@ a {
 
 
 .data-note {
-  margin: 20px 4px 0;
+  margin:
+    20px 4px 0;
 
   color: #8a8f88;
 
@@ -1307,15 +1766,74 @@ a {
 }
 
 
-.site-footer {
-  width: min(1050px, calc(100% - 40px));
+/* Placeholder routes for the navigation */
+
+.placeholder-page {
+  min-height: 620px;
+
+  padding: 110px 20px;
+
+  display: flex;
+  justify-content: center;
+}
+
+
+.placeholder-content {
+  width: min(
+    650px,
+    100%
+  );
+
+  text-align: center;
+}
+
+
+.placeholder-content h1 {
+  margin:
+    14px 0 16px;
+
+  font-size: clamp(
+    36px,
+    6vw,
+    55px
+  );
+
+  font-weight: 650;
+
+  letter-spacing: -0.05em;
+}
+
+
+.placeholder-content p {
+  max-width: 520px;
+
   margin: 0 auto;
-  padding: 27px 0 42px;
+
+  color:
+    var(--muted);
+
+  font-size: 16px;
+  line-height: 1.65;
+}
+
+
+.site-footer {
+  width: min(
+    1050px,
+    calc(100% - 40px)
+  );
+
+  margin: 0 auto;
+
+  padding:
+    27px 0 42px;
 
   display: flex;
   justify-content: space-between;
 
-  border-top: 1px solid var(--border);
+  border-top:
+    1px solid
+    var(--border);
 
   color: #858b83;
 
@@ -1323,12 +1841,56 @@ a {
 }
 
 
-@media (max-width: 760px) {
+/* Tablet and mobile */
+
+@media (
+  max-width: 760px
+) {
   .header-inner {
     width: min(
       100% - 28px,
       1180px
     );
+
+    height: auto;
+    min-height: 72px;
+
+    padding: 10px 0;
+  }
+
+
+  .brand {
+    font-size: 17px;
+  }
+
+
+  .brand-mark {
+    width: 33px;
+    height: 33px;
+  }
+
+
+  .site-nav {
+    height: 52px;
+
+    align-items: stretch;
+
+    gap: 0;
+  }
+
+
+  .nav-link {
+    min-width: auto;
+
+    padding: 0 10px;
+
+    font-size: 12px;
+  }
+
+
+  .nav-link.active::after {
+    left: 10px;
+    right: 10px;
   }
 
 
@@ -1354,7 +1916,8 @@ a {
 
 
   .registration-search {
-    grid-template-columns: 1fr;
+    grid-template-columns:
+      1fr;
   }
 
 
@@ -1374,7 +1937,8 @@ a {
       1100px
     );
 
-    grid-template-columns: 1fr;
+    grid-template-columns:
+      1fr;
   }
 
 
@@ -1397,8 +1961,11 @@ a {
 
 
   .vehicle-header {
-    align-items: flex-start;
-    flex-direction: column;
+    align-items:
+      flex-start;
+
+    flex-direction:
+      column;
   }
 
 
@@ -1420,7 +1987,8 @@ a {
 
 
   .stats-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns:
+      1fr;
   }
 
 
@@ -1435,7 +2003,8 @@ a {
 
 
   .latest-mot-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns:
+      1fr;
   }
 
 
@@ -1454,7 +2023,8 @@ a {
   }
 
 
-  .mot-history-panel > .section-heading {
+  .mot-history-panel >
+  .section-heading {
     padding: 20px;
   }
 
@@ -1493,9 +2063,11 @@ a {
 
 
   .mot-history-details {
-    grid-column: 1 / -1;
+    grid-column:
+      1 / -1;
 
-    padding: 16px 0 0;
+    padding:
+      16px 0 0;
   }
 
 
@@ -1510,19 +2082,64 @@ a {
       1050px
     );
 
-    flex-direction: column;
+    flex-direction:
+      column;
 
     gap: 8px;
   }
 }
 
 
-@media (max-width: 470px) {
-  .header-badge {
-    display: none;
+@media (
+  max-width: 540px
+) {
+  .header-inner {
+    align-items:
+      flex-start;
+
+    flex-direction:
+      column;
+
+    gap: 4px;
+
+    padding:
+      12px 0 0;
   }
 
 
+  .brand {
+    padding-bottom: 5px;
+  }
+
+
+  .site-nav {
+    width: 100%;
+
+    height: 44px;
+  }
+
+
+  .nav-link {
+    flex: 1;
+
+    justify-content:
+      center;
+
+    padding:
+      0 5px;
+  }
+
+
+  .nav-link.active::after {
+    left: 8px;
+    right: 8px;
+  }
+}
+
+
+@media (
+  max-width: 470px
+) {
   .hero h1 {
     font-size: 38px;
   }
@@ -1531,7 +2148,7 @@ a {
   .registration-field input {
     padding: 0 15px;
 
-    font-size: 23px;
+    font-size: 25px;
   }
 
 
@@ -1545,13 +2162,20 @@ a {
   }
 
 
-  .mot-history-panel > .section-heading {
+  .number-plate {
+    font-size: 20px;
+  }
+
+
+  .mot-history-panel >
+  .section-heading {
     padding: 20px;
   }
 
 
   .mot-history-row {
-    padding: 17px 16px;
+    padding:
+      17px 16px;
   }
 
 
@@ -1568,7 +2192,8 @@ a {
 
 
   .mot-record-meta {
-    flex-direction: column;
+    flex-direction:
+      column;
 
     gap: 4px;
   }
