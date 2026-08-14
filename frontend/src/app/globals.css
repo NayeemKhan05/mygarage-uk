@@ -868,6 +868,33 @@ a {
   font-size: 12px;
 }
 
+.mileage-change {
+  margin-top: 5px;
+
+  font-size: 11px !important;
+  font-weight: 650;
+}
+
+
+.mileage-change.positive {
+  color: var(--green) !important;;
+}
+
+
+.mileage-change.negative {
+  color: var(--red) !important;;
+}
+
+
+.mileage-change.neutral {
+  color: var(--muted);
+}
+
+
+.mileage-change.unavailable {
+  color: #999e97;
+  font-weight: 500;
+}
 
 .mot-summary-right {
   display: flex;

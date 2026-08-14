@@ -232,7 +232,7 @@ export default function VehicleChecker() {
                         .toUpperCase(),
                     )
                   }
-                  placeholder="LB02 BYW"
+                  placeholder="ENTER REG"
                   maxLength={9}
                   autoComplete="off"
                   spellCheck={false}

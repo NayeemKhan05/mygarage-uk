@@ -3,10 +3,12 @@
 import { useState } from "react";
 
 import type { MotTest } from "../../types/vehicle";
+
 import {
   formatDate,
   formatMileage,
   getDefectTone,
+  getMileageChange,
   sortMotTests,
 } from "./utils";
 
@@ -79,6 +81,17 @@ export default function MotHistory({
               test.test_result?.toUpperCase() ===
               "PASSED";
 
+            // The list is newest first, so the next item is the MOT
+            // that happened immediately before this one.
+            const previousTest =
+              sortedTests[index + 1];
+
+            const mileageChange =
+              getMileageChange(
+                test,
+                previousTest,
+              );
+
             return (
               <details
                 className="mot-card"
@@ -98,6 +111,12 @@ export default function MotHistory({
                         test.odometer_value,
                         test.odometer_unit,
                       )}
+                    </span>
+
+                    <span
+                      className={`mileage-change ${mileageChange.tone}`}
+                    >
+                      {mileageChange.label}
                     </span>
                   </div>
 
@@ -179,7 +198,10 @@ export default function MotHistory({
                   ) : (
                     <div className="defects">
                       {test.defects.map(
-                        (defect, defectIndex) => (
+                        (
+                          defect,
+                          defectIndex,
+                        ) => (
                           <div
                             className={`defect ${getDefectTone(
                               defect,

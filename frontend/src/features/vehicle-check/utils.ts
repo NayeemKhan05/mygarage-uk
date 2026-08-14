@@ -101,6 +101,83 @@ export function getLatestMileage(
 }
 
 
+export function getMileageChange(
+  currentTest: MotTest,
+  previousTest: MotTest | undefined,
+): {
+  label: string;
+  tone: "positive" | "negative" | "neutral" | "unavailable";
+} {
+  if (!previousTest) {
+    return {
+      label: "No earlier MOT mileage",
+      tone: "unavailable",
+    };
+  }
+
+  if (
+    currentTest.odometer_value === null ||
+    previousTest.odometer_value === null
+  ) {
+    return {
+      label: "Mileage change unavailable",
+      tone: "unavailable",
+    };
+  }
+
+  const currentUnit =
+    currentTest.odometer_unit?.toUpperCase();
+
+  const previousUnit =
+    previousTest.odometer_unit?.toUpperCase();
+
+  // We should not compare readings if DVSA recorded them in different units.
+  if (
+    currentUnit &&
+    previousUnit &&
+    currentUnit !== previousUnit
+  ) {
+    return {
+      label: "Mileage change unavailable",
+      tone: "unavailable",
+    };
+  }
+
+  const difference =
+    currentTest.odometer_value -
+    previousTest.odometer_value;
+
+  const unit =
+    currentUnit === "MI"
+      ? "mi"
+      : currentUnit?.toLowerCase() ?? "";
+
+  const formattedDifference =
+    new Intl.NumberFormat("en-GB").format(
+      Math.abs(difference),
+    );
+
+  if (difference > 0) {
+    return {
+      label: `+${formattedDifference} ${unit} since previous MOT`.trim(),
+      tone: "positive",
+    };
+  }
+
+  if (difference < 0) {
+    return {
+      label: `-${formattedDifference} ${unit} vs previous MOT`.trim(),
+      tone: "negative",
+    };
+  }
+
+  return {
+    label: `No mileage change since previous MOT`,
+    tone: "neutral",
+  };
+}
+
+
 export function getCurrentMot(
   tests: MotTest[],
 ): {
