@@ -5,6 +5,7 @@ business logic do not become coupled to DVSA-specific HTTP details.
 """
 
 
+import logging
 import time
 from functools import lru_cache
 
@@ -13,6 +14,9 @@ from pydantic import ValidationError
 
 from app.core.config import settings
 from app.schemas.dvsa import DvsaVehicle
+
+
+logger = logging.getLogger(__name__)
 
 
 class DvsaError(Exception):
@@ -68,13 +72,24 @@ class DvsaClient:
                 f"Missing DVSA configuration: {', '.join(missing)}"
             )
 
-    def _get_access_token(self) -> str:
+    def _clear_access_token(self) -> None:
+        self._access_token = None
+        self._token_expires_at = 0.0
+
+    def _get_access_token(
+        self,
+        force_refresh: bool = False,
+    ) -> str:
         self._check_configuration()
 
-        # Reuse the current token until it is close to expiring.
+        # Wall-clock time keeps moving while the laptop is asleep,
+        # so an expired DVSA token will not look valid after waking up.
+        now = time.time()
+
         if (
-            self._access_token
-            and time.monotonic() < self._token_expires_at
+            not force_refresh
+            and self._access_token
+            and now < self._token_expires_at
         ):
             return self._access_token
 
@@ -93,12 +108,18 @@ class DvsaClient:
                 },
                 timeout=10.0,
             )
+
         except httpx.RequestError as exc:
             raise DvsaUnavailableError(
                 "Could not reach the DVSA authentication service"
             ) from exc
 
         if response.status_code >= 400:
+            logger.warning(
+                "DVSA authentication failed with status %s",
+                response.status_code,
+            )
+
             raise DvsaAuthenticationError(
                 "DVSA authentication failed"
             )
@@ -109,19 +130,54 @@ class DvsaClient:
             access_token = token_data["access_token"]
             expires_in = int(token_data["expires_in"])
 
-        except (KeyError, TypeError, ValueError) as exc:
+        except (
+            KeyError,
+            TypeError,
+            ValueError,
+        ) as exc:
             raise DvsaAuthenticationError(
                 "DVSA returned an invalid authentication response"
             ) from exc
 
         self._access_token = access_token
 
-        # Refresh slightly early rather than risk using an expired token.
+        # Refresh a little early rather than using a token right up
+        # to the moment DVSA considers it expired.
         self._token_expires_at = (
-            time.monotonic() + max(expires_in - 30, 0)
+            time.time()
+            + max(expires_in - 60, 0)
         )
 
         return access_token
+
+    def _request_vehicle(
+        self,
+        registration: str,
+        access_token: str,
+    ) -> httpx.Response:
+        url = (
+            f"{settings.dvsa_base_url}"
+            f"/v1/trade/vehicles/registration/{registration}"
+        )
+
+        try:
+            return httpx.get(
+                url,
+                headers={
+                    "Authorization":
+                        f"Bearer {access_token}",
+                    "X-API-Key":
+                        settings.dvsa_api_key,
+                    "Accept":
+                        "application/json",
+                },
+                timeout=15.0,
+            )
+
+        except httpx.RequestError as exc:
+            raise DvsaUnavailableError(
+                "Could not reach the DVSA MOT History API"
+            ) from exc
 
     def get_vehicle_by_registration(
         self,
@@ -129,25 +185,28 @@ class DvsaClient:
     ) -> DvsaVehicle:
         access_token = self._get_access_token()
 
-        url = (
-            f"{settings.dvsa_base_url}"
-            f"/v1/trade/vehicles/registration/{registration}"
+        response = self._request_vehicle(
+            registration,
+            access_token,
         )
 
-        try:
-            response = httpx.get(
-                url,
-                headers={
-                    "Authorization": f"Bearer {access_token}",
-                    "X-API-Key": settings.dvsa_api_key,
-                    "Accept": "application/json",
-                },
-                timeout=15.0,
+        # A cached token can become invalid before we expect it to.
+        # Get a fresh token and retry the request once before failing.
+        if response.status_code in (401, 403):
+            logger.info(
+                "DVSA rejected the cached token, refreshing it"
             )
-        except httpx.RequestError as exc:
-            raise DvsaUnavailableError(
-                "Could not reach the DVSA MOT History API"
-            ) from exc
+
+            self._clear_access_token()
+
+            fresh_token = self._get_access_token(
+                force_refresh=True
+            )
+
+            response = self._request_vehicle(
+                registration,
+                fresh_token,
+            )
 
         if response.status_code == 400:
             raise DvsaBadRequestError(
@@ -184,7 +243,10 @@ class DvsaClient:
                 response.json()
             )
 
-        except (ValueError, ValidationError) as exc:
+        except (
+            ValueError,
+            ValidationError,
+        ) as exc:
             raise DvsaError(
                 "DVSA returned vehicle data we could not understand"
             ) from exc
