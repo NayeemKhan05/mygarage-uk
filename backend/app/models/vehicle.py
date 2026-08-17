@@ -20,6 +20,7 @@ from app.db.base import Base
 
 if TYPE_CHECKING:
     from app.models.mot import MotTest
+    from app.models.user_vehicle import UserVehicle
 
 
 class Vehicle(Base):
@@ -76,6 +77,12 @@ class Vehicle(Base):
     )
 
     mot_tests: Mapped[list["MotTest"]] = relationship(
+        back_populates="vehicle",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+
+    user_links: Mapped[list["UserVehicle"]] = relationship(
         back_populates="vehicle",
         cascade="all, delete-orphan",
         passive_deletes=True,

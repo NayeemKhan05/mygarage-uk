@@ -20,8 +20,8 @@ jobs:
         working-directory: backend
 
     env:
-      # The app needs a database URL when it starts during the tests.
       DATABASE_URL: "sqlite+pysqlite:///:memory:"
+      JWT_SECRET_KEY: "github-actions-test-secret-key-not-used-in-production"
 
     steps:
       - name: Check out repository

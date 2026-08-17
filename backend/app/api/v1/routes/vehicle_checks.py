@@ -9,8 +9,17 @@ from fastapi import (
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.api.v1.dvsa import fetch_dvsa_vehicle
+from app.api.dependencies.auth import (
+    get_optional_user,
+)
+from app.api.v1.dvsa import (
+    fetch_dvsa_vehicle,
+)
 from app.db.session import get_db
+from app.models.user import User
+from app.models.user_vehicle import (
+    UserVehicle,
+)
 from app.models.vehicle import Vehicle
 from app.schemas.vehicle import (
     VehicleCheckResponse,
@@ -28,14 +37,22 @@ from app.services.mot_history import (
 
 router = APIRouter()
 
+
 DbSession = Annotated[
     Session,
     Depends(get_db),
 ]
 
+
 DvsaService = Annotated[
     DvsaClient,
     Depends(get_dvsa_client),
+]
+
+
+OptionalCurrentUser = Annotated[
+    User | None,
+    Depends(get_optional_user),
 ]
 
 
@@ -48,16 +65,23 @@ def check_vehicle(
     payload: VehicleLookupRequest,
     db: DbSession,
     dvsa: DvsaService,
+    current_user: OptionalCurrentUser,
 ) -> VehicleCheckResponse:
     dvsa_vehicle = fetch_dvsa_vehicle(
         dvsa,
         payload.registration,
     )
 
-    if not dvsa_vehicle.make or not dvsa_vehicle.model:
+    if (
+        not dvsa_vehicle.make
+        or not dvsa_vehicle.model
+    ):
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
-            detail="DVSA returned incomplete vehicle data",
+            detail=(
+                "DVSA returned incomplete "
+                "vehicle data"
+            ),
         )
 
     existing_vehicle = db.scalar(
@@ -67,8 +91,25 @@ def check_vehicle(
         )
     )
 
+    garage_link = None
+
+    if (
+        current_user is not None
+        and existing_vehicle is not None
+    ):
+        garage_link = db.scalar(
+            select(UserVehicle).where(
+                UserVehicle.user_id
+                == current_user.id,
+                UserVehicle.vehicle_id
+                == existing_vehicle.id,
+            )
+        )
+
     mot_tests = [
-        dvsa_mot_test_to_read(test)
+        dvsa_mot_test_to_read(
+            test
+        )
         for test in sort_dvsa_mot_tests(
             dvsa_vehicle.mot_tests
         )
@@ -82,12 +123,17 @@ def check_vehicle(
         engine_size=dvsa_vehicle.engine_size,
         colour=dvsa_vehicle.primary_colour,
         year=dvsa_vehicle.year,
-        mot_tests_found=len(mot_tests),
+        mot_tests_found=len(
+            mot_tests
+        ),
         mot_tests=mot_tests,
-        in_garage=existing_vehicle is not None,
+        in_garage=(
+            garage_link is not None
+        ),
         garage_vehicle_id=(
             existing_vehicle.id
-            if existing_vehicle
+            if garage_link
+            and existing_vehicle
             else None
         ),
     )

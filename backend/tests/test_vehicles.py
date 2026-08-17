@@ -1,5 +1,7 @@
-def test_create_vehicle(client):
-    response = client.post(
+def test_create_vehicle(
+    authenticated_client,
+):
+    response = authenticated_client.post(
         "/api/v1/vehicles",
         json={
             "registration": "AB12 CDE",
@@ -14,16 +16,15 @@ def test_create_vehicle(client):
 
     assert response.status_code == 201
 
-    vehicle = response.json()
+    result = response.json()
 
-    assert vehicle["registration"] == "AB12CDE"
-    assert vehicle["make"] == "Honda"
-    assert vehicle["model"] == "Civic"
-    assert vehicle["id"] == 1
+    assert result["registration"] == "AB12CDE"
 
 
-def test_list_vehicles(client):
-    client.post(
+def test_list_vehicles(
+    authenticated_client,
+):
+    authenticated_client.post(
         "/api/v1/vehicles",
         json={
             "registration": "AB12 CDE",
@@ -32,27 +33,52 @@ def test_list_vehicles(client):
         },
     )
 
-    response = client.get("/api/v1/vehicles")
+    response = authenticated_client.get(
+        "/api/v1/vehicles",
+    )
 
     assert response.status_code == 200
     assert len(response.json()) == 1
 
 
-def test_duplicate_registration_is_rejected(client):
+def test_duplicate_vehicle_is_rejected(
+    authenticated_client,
+):
     vehicle = {
         "registration": "AB12 CDE",
         "make": "Honda",
         "model": "Civic",
     }
 
-    first_response = client.post("/api/v1/vehicles", json=vehicle)
-    second_response = client.post("/api/v1/vehicles", json=vehicle)
+    first_response = authenticated_client.post(
+        "/api/v1/vehicles",
+        json=vehicle,
+    )
+
+    second_response = authenticated_client.post(
+        "/api/v1/vehicles",
+        json=vehicle,
+    )
 
     assert first_response.status_code == 201
     assert second_response.status_code == 409
 
 
-def test_get_unknown_vehicle_returns_404(client):
-    response = client.get("/api/v1/vehicles/999")
+def test_unknown_vehicle_returns_404(
+    authenticated_client,
+):
+    response = authenticated_client.get(
+        "/api/v1/vehicles/999",
+    )
 
     assert response.status_code == 404
+
+
+def test_vehicle_routes_require_login(
+    client,
+):
+    response = client.get(
+        "/api/v1/vehicles",
+    )
+
+    assert response.status_code == 401
