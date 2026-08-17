@@ -4,8 +4,8 @@ from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-# Keep local configuration in one place at the root of the project.
-ROOT_ENV_FILE = Path(__file__).resolve().parents[3] / ".env"
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
+ROOT_ENV_FILE = PROJECT_ROOT / ".env"
 
 
 class Settings(BaseSettings):
@@ -24,6 +24,15 @@ class Settings(BaseSettings):
     auth_token_expire_minutes: int = 1440
     auth_cookie_name: str = "mygarage_access_token"
     auth_cookie_secure: bool = False
+
+    # Receipt files stay on local disk during development.
+    # We'll move this storage behind S3 when MyGarage is deployed.
+    upload_dir: Path = PROJECT_ROOT / "uploads"
+    max_receipt_size_mb: int = 10
+
+    @property
+    def max_receipt_size_bytes(self) -> int:
+        return self.max_receipt_size_mb * 1024 * 1024
 
     model_config = SettingsConfigDict(
         env_file=ROOT_ENV_FILE,

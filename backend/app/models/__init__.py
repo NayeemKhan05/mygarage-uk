@@ -1,4 +1,6 @@
+from app.models.maintenance import MaintenanceItem
 from app.models.mot import MotDefect, MotTest
+from app.models.service import ServiceReceipt, ServiceRecord
 from app.models.user import User
 from app.models.user_vehicle import UserVehicle
 from app.models.vehicle import Vehicle
@@ -10,4 +12,7 @@ __all__ = [
     "MotDefect",
     "User",
     "UserVehicle",
+    "ServiceRecord",
+    "ServiceReceipt",
+    "MaintenanceItem",
 ]
