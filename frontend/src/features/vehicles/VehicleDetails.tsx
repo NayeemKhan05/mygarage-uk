@@ -43,6 +43,9 @@ import {
   sortMotTests,
 } from "../vehicle-check/utils";
 
+import MaintenanceTracker from "./MaintenanceTracker";
+import ServiceHistory from "./ServiceHistory";
+
 import styles from "./Vehicles.module.css";
 
 
@@ -171,6 +174,7 @@ export default function VehicleDetails() {
             motHistoryResult,
           );
         }
+
       } catch (caughtError) {
         if (cancelled) {
           return;
@@ -178,12 +182,13 @@ export default function VehicleDetails() {
 
         if (
           caughtError instanceof
-            ApiError &&
-          caughtError.status === 404
+            ApiError
+          && caughtError.status === 404
         ) {
           setError(
             "This vehicle could not be found in My Vehicles.",
           );
+
         } else if (
           caughtError instanceof
           ApiError
@@ -191,11 +196,13 @@ export default function VehicleDetails() {
           setError(
             caughtError.message,
           );
+
         } else {
           setError(
             "We could not load this vehicle. Please try again.",
           );
         }
+
       } finally {
         if (!cancelled) {
           setLoading(false);
@@ -209,6 +216,7 @@ export default function VehicleDetails() {
     return () => {
       cancelled = true;
     };
+
   }, [
     authLoading,
     user,
@@ -248,6 +256,7 @@ export default function VehicleDetails() {
         setNotice(
           "MOT history is already up to date.",
         );
+
       } else {
         setNotice(
           `${result.mot_tests_saved} new MOT ${
@@ -257,6 +266,7 @@ export default function VehicleDetails() {
           } added.`,
         );
       }
+
     } catch (caughtError) {
       if (
         caughtError instanceof
@@ -265,11 +275,13 @@ export default function VehicleDetails() {
         setError(
           caughtError.message,
         );
+
       } else {
         setError(
           "We could not refresh the MOT history. Please try again.",
         );
       }
+
     } finally {
       setRefreshing(false);
     }
@@ -303,6 +315,7 @@ export default function VehicleDetails() {
       router.push(
         "/vehicles",
       );
+
     } catch (caughtError) {
       if (
         caughtError instanceof
@@ -311,6 +324,7 @@ export default function VehicleDetails() {
         setError(
           caughtError.message,
         );
+
       } else {
         setError(
           "We could not remove this vehicle. Please try again.",
@@ -323,9 +337,9 @@ export default function VehicleDetails() {
 
 
   if (
-    authLoading ||
-    !user ||
-    loading
+    authLoading
+    || !user
+    || loading
   ) {
     return (
       <div className="site-shell">
@@ -357,8 +371,8 @@ export default function VehicleDetails() {
 
 
   if (
-    error &&
-    !vehicle
+    error
+    && !vehicle
   ) {
     return (
       <div className="site-shell">
@@ -585,6 +599,14 @@ export default function VehicleDetails() {
             </div>
           </div>
 
+          <ServiceHistory
+            vehicleId={vehicle.id}
+          />
+
+          <MaintenanceTracker
+            vehicleId={vehicle.id}
+          />
+
           {latestMot && (
             <section className="panel">
               <div className="section-heading">
@@ -601,14 +623,14 @@ export default function VehicleDetails() {
                 <span
                   className={
                     latestMot.test_result
-                      ?.toUpperCase() ===
-                    "PASSED"
+                      ?.toUpperCase()
+                    === "PASSED"
                       ? "result-badge passed"
                       : "result-badge failed"
                   }
                 >
-                  {latestMot.test_result ??
-                    "Unknown"}
+                  {latestMot.test_result
+                    ?? "Unknown"}
                 </span>
               </div>
 
@@ -652,18 +674,22 @@ export default function VehicleDetails() {
           )}
 
           <MileageChart
-            motTests={motHistory}
+            motTests={
+              motHistory
+            }
           />
 
           <MotHistory
-            motTests={motHistory}
+            motTests={
+              motHistory
+            }
           />
 
           <p className="data-note">
             MOT information is saved from DVSA
-            records. Use Refresh MOT data whenever
-            you want MyGarage to check for newer
-            tests.
+            records. Service and maintenance
+            information is private to your
+            MyGarage account.
           </p>
         </div>
       </main>

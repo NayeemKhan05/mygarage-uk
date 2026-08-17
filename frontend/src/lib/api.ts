@@ -3,6 +3,17 @@ import type {
 } from "../types/auth";
 
 import type {
+  MaintenanceItem,
+  MaintenanceItemPayload,
+} from "../types/maintenance";
+
+import type {
+  ServiceReceipt,
+  ServiceRecord,
+  ServiceRecordPayload,
+} from "../types/service";
+
+import type {
   GarageVehicle,
   MotHistoryRefreshResponse,
   MotTest,
@@ -40,31 +51,51 @@ async function apiRequest<T>(
   path: string,
   options: RequestInit = {},
 ): Promise<T> {
+  const headers =
+    new Headers(
+      options.headers,
+    );
+
+  /*
+   * FormData must set its own multipart boundary,
+   * so only add JSON headers for normal API requests.
+   */
+  if (
+    !(options.body instanceof FormData)
+    && !headers.has(
+      "Content-Type"
+    )
+  ) {
+    headers.set(
+      "Content-Type",
+      "application/json",
+    );
+  }
+
   const response = await fetch(
     `${API_BASE_URL}${path}`,
     {
       ...options,
 
-      // Authentication is stored in an HttpOnly cookie.
       credentials: "include",
 
-      headers: {
-        "Content-Type": "application/json",
-        ...options.headers,
-      },
+      headers,
     },
   );
 
   if (!response.ok) {
-    let message = "Something went wrong";
+    let message =
+      "Something went wrong";
 
     try {
       const body =
         (await response.json()) as ApiErrorResponse;
 
       if (body.detail) {
-        message = body.detail;
+        message =
+          body.detail;
       }
+
     } catch {
       // Some server errors do not return JSON.
     }
@@ -75,11 +106,15 @@ async function apiRequest<T>(
     );
   }
 
-  if (response.status === 204) {
+  if (
+    response.status === 204
+  ) {
     return undefined as T;
   }
 
-  return response.json() as Promise<T>;
+  return (
+    response.json() as Promise<T>
+  );
 }
 
 
@@ -94,6 +129,7 @@ export function registerUser(
     "/auth/register",
     {
       method: "POST",
+
       body: JSON.stringify({
         email,
         password,
@@ -111,6 +147,7 @@ export function loginUser(
     "/auth/login",
     {
       method: "POST",
+
       body: JSON.stringify({
         email,
         password,
@@ -149,6 +186,7 @@ export function checkVehicle(
     "/vehicle-checks",
     {
       method: "POST",
+
       body: JSON.stringify({
         registration,
       }),
@@ -167,6 +205,7 @@ export function addVehicleToGarage(
     "/vehicles/import",
     {
       method: "POST",
+
       body: JSON.stringify({
         registration,
       }),
@@ -218,6 +257,190 @@ export function deleteGarageVehicle(
 ): Promise<void> {
   return apiRequest<void>(
     `/vehicles/${vehicleId}`,
+    {
+      method: "DELETE",
+    },
+  );
+}
+
+
+/* Service history */
+
+
+export function getServiceRecords(
+  vehicleId: number,
+): Promise<ServiceRecord[]> {
+  return apiRequest<ServiceRecord[]>(
+    `/vehicles/${vehicleId}/service-records`,
+  );
+}
+
+
+export function createServiceRecord(
+  vehicleId: number,
+  payload: ServiceRecordPayload,
+): Promise<ServiceRecord> {
+  return apiRequest<ServiceRecord>(
+    `/vehicles/${vehicleId}/service-records`,
+    {
+      method: "POST",
+      body: JSON.stringify(
+        payload,
+      ),
+    },
+  );
+}
+
+
+export function updateServiceRecord(
+  vehicleId: number,
+  recordId: number,
+  payload: Partial<ServiceRecordPayload>,
+): Promise<ServiceRecord> {
+  return apiRequest<ServiceRecord>(
+    (
+      `/vehicles/${vehicleId}/service-records/`
+      + recordId
+    ),
+    {
+      method: "PUT",
+      body: JSON.stringify(
+        payload,
+      ),
+    },
+  );
+}
+
+
+export function deleteServiceRecord(
+  vehicleId: number,
+  recordId: number,
+): Promise<void> {
+  return apiRequest<void>(
+    (
+      `/vehicles/${vehicleId}/service-records/`
+      + recordId
+    ),
+    {
+      method: "DELETE",
+    },
+  );
+}
+
+
+export function uploadServiceReceipt(
+  vehicleId: number,
+  recordId: number,
+  file: File,
+): Promise<ServiceReceipt> {
+  const formData =
+    new FormData();
+
+  formData.append(
+    "file",
+    file,
+  );
+
+  return apiRequest<ServiceReceipt>(
+    (
+      `/vehicles/${vehicleId}/service-records/`
+      + `${recordId}/receipts`
+    ),
+    {
+      method: "POST",
+      body: formData,
+    },
+  );
+}
+
+
+export function deleteServiceReceipt(
+  vehicleId: number,
+  recordId: number,
+  receiptId: number,
+): Promise<void> {
+  return apiRequest<void>(
+    (
+      `/vehicles/${vehicleId}/service-records/`
+      + `${recordId}/receipts/${receiptId}`
+    ),
+    {
+      method: "DELETE",
+    },
+  );
+}
+
+
+export function getServiceReceiptUrl(
+  vehicleId: number,
+  recordId: number,
+  receiptId: number,
+): string {
+  return (
+    `${API_BASE_URL}/vehicles/${vehicleId}`
+    + `/service-records/${recordId}`
+    + `/receipts/${receiptId}/file`
+  );
+}
+
+
+/* Maintenance */
+
+
+export function getMaintenanceItems(
+  vehicleId: number,
+): Promise<MaintenanceItem[]> {
+  return apiRequest<MaintenanceItem[]>(
+    `/vehicles/${vehicleId}/maintenance`,
+  );
+}
+
+
+export function createMaintenanceItem(
+  vehicleId: number,
+  payload: MaintenanceItemPayload,
+): Promise<MaintenanceItem> {
+  return apiRequest<MaintenanceItem>(
+    `/vehicles/${vehicleId}/maintenance`,
+    {
+      method: "POST",
+      body: JSON.stringify(
+        payload,
+      ),
+    },
+  );
+}
+
+
+export function updateMaintenanceItem(
+  vehicleId: number,
+  itemId: number,
+  payload: Partial<MaintenanceItemPayload>,
+): Promise<MaintenanceItem> {
+  return apiRequest<MaintenanceItem>(
+    (
+      `/vehicles/${vehicleId}/maintenance/`
+      + itemId
+    ),
+    {
+      method: "PUT",
+      body: JSON.stringify(
+        payload,
+      ),
+    },
+  );
+}
+
+
+export function deleteMaintenanceItem(
+  vehicleId: number,
+  itemId: number,
+): Promise<void> {
+  return apiRequest<void>(
+    (
+      `/vehicles/${vehicleId}/maintenance/`
+      + itemId
+    ),
     {
       method: "DELETE",
     },
