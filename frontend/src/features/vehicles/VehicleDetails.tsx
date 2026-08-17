@@ -15,6 +15,10 @@ import {
 import SiteHeader from "../../components/SiteHeader";
 
 import {
+  useAuth,
+} from "../../contexts/AuthContext";
+
+import {
   ApiError,
   deleteGarageVehicle,
   getGarageVehicle,
@@ -50,6 +54,11 @@ export default function VehicleDetails() {
 
   const router =
     useRouter();
+
+  const {
+    user,
+    loading: authLoading,
+  } = useAuth();
 
   const vehicleId =
     Number(params.id);
@@ -104,14 +113,27 @@ export default function VehicleDetails() {
 
 
   useEffect(() => {
+    if (authLoading) {
+      return;
+    }
+
+    if (!user) {
+      router.replace(
+        "/login"
+      );
+
+      return;
+    }
+
     let cancelled = false;
+
 
     async function loadVehicle() {
       if (
         !Number.isInteger(
           vehicleId,
-        ) ||
-        vehicleId <= 0
+        )
+        || vehicleId <= 0
       ) {
         setError(
           "This vehicle link is invalid.",
@@ -134,6 +156,7 @@ export default function VehicleDetails() {
             getGarageVehicle(
               vehicleId,
             ),
+
             getVehicleMotHistory(
               vehicleId,
             ),
@@ -170,7 +193,7 @@ export default function VehicleDetails() {
           );
         } else {
           setError(
-            "We could not load this vehicle. Check that the backend is running and try again.",
+            "We could not load this vehicle. Please try again.",
           );
         }
       } finally {
@@ -180,12 +203,18 @@ export default function VehicleDetails() {
       }
     }
 
+
     loadVehicle();
 
     return () => {
       cancelled = true;
     };
-  }, [vehicleId]);
+  }, [
+    authLoading,
+    user,
+    router,
+    vehicleId,
+  ]);
 
 
   async function handleRefresh() {
@@ -256,7 +285,7 @@ export default function VehicleDetails() {
       window.confirm(
         `Remove ${formatRegistration(
           vehicle.registration,
-        )} from My Vehicles?\n\nThis will also remove its saved MOT history from MyGarage.`,
+        )} from My Vehicles?`,
       );
 
     if (!confirmed) {
@@ -286,14 +315,18 @@ export default function VehicleDetails() {
         setError(
           "We could not remove this vehicle. Please try again.",
         );
-
-        setDeleting(false);
       }
+
+      setDeleting(false);
     }
   }
 
 
-  if (loading) {
+  if (
+    authLoading ||
+    !user ||
+    loading
+  ) {
     return (
       <div className="site-shell">
         <SiteHeader
@@ -503,9 +536,7 @@ export default function VehicleDetails() {
               <span
                 className={`${styles.countdown} ${toneClass}`}
               >
-                {
-                  motStatus.timeRemainingLabel
-                }
+                {motStatus.timeRemainingLabel}
               </span>
 
               {motStatus.expiryDate && (
@@ -613,10 +644,7 @@ export default function VehicleDetails() {
                   </span>
 
                   <strong>
-                    {
-                      latestMot.defects
-                        .length
-                    }
+                    {latestMot.defects.length}
                   </strong>
                 </div>
               </div>
@@ -632,11 +660,10 @@ export default function VehicleDetails() {
           />
 
           <p className="data-note">
-            MOT information is saved
-            from DVSA records. Use
-            Refresh MOT data whenever
-            you want MyGarage to check
-            for newer tests.
+            MOT information is saved from DVSA
+            records. Use Refresh MOT data whenever
+            you want MyGarage to check for newer
+            tests.
           </p>
         </div>
       </main>

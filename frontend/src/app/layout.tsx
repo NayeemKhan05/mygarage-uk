@@ -1,10 +1,18 @@
-import type { Metadata } from "next";
+import type {
+  Metadata,
+} from "next";
+
+import {
+  AuthProvider,
+} from "../contexts/AuthContext";
 
 import "./globals.css";
 
 
 export const metadata: Metadata = {
-  title: "MyGarage UK | Vehicle MOT Checker",
+  title:
+    "MyGarage UK | Vehicle MOT Checker",
+
   description:
     "Check UK vehicle MOT history, mileage and recorded defects.",
 };
@@ -17,7 +25,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en-GB">
-      <body>{children}</body>
+      <body>
+        <AuthProvider>
+          {children}
+        </AuthProvider>
+      </body>
     </html>
   );
 }

@@ -7,7 +7,15 @@ import {
 
 import Link from "next/link";
 
+import {
+  useRouter,
+} from "next/navigation";
+
 import SiteHeader from "../../components/SiteHeader";
+
+import {
+  useAuth,
+} from "../../contexts/AuthContext";
 
 import {
   ApiError,
@@ -32,6 +40,14 @@ interface VehicleSummary {
 
 
 export default function VehiclesDashboard() {
+  const router =
+    useRouter();
+
+  const {
+    user,
+    loading: authLoading,
+  } = useAuth();
+
   const [
     vehicles,
     setVehicles,
@@ -54,7 +70,20 @@ export default function VehiclesDashboard() {
 
 
   useEffect(() => {
+    if (authLoading) {
+      return;
+    }
+
+    if (!user) {
+      router.replace(
+        "/login"
+      );
+
+      return;
+    }
+
     let cancelled = false;
+
 
     async function loadVehicles() {
       setLoading(true);
@@ -64,10 +93,6 @@ export default function VehiclesDashboard() {
         const savedVehicles =
           await getGarageVehicles();
 
-        /*
-         * The existing vehicles endpoint only returns the basic car
-         * details, so fetch each stored MOT history for the summary cards.
-         */
         const summaries =
           await Promise.all(
             savedVehicles.map(
@@ -85,7 +110,6 @@ export default function VehiclesDashboard() {
                     motHistory,
                   };
                 } catch {
-                  // One bad history request should not hide every car.
                   return {
                     vehicle,
                     motHistory: [],
@@ -114,7 +138,7 @@ export default function VehiclesDashboard() {
           );
         } else {
           setError(
-            "We could not load your vehicles. Check that the backend is running and try again.",
+            "We could not load your vehicles. Please try again.",
           );
         }
       } finally {
@@ -124,12 +148,49 @@ export default function VehiclesDashboard() {
       }
     }
 
+
     loadVehicles();
 
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [
+    authLoading,
+    user,
+    router,
+  ]);
+
+
+  if (
+    authLoading ||
+    !user
+  ) {
+    return (
+      <div className="site-shell">
+        <SiteHeader
+          activePage="vehicles"
+        />
+
+        <main className={styles.page}>
+          <div className={styles.pageInner}>
+            <div className={styles.loadingState}>
+              <div className="loader" />
+
+              <div>
+                <strong>
+                  Loading My Vehicles
+                </strong>
+
+                <span>
+                  Checking your account.
+                </span>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
 
   return (
@@ -152,11 +213,9 @@ export default function VehiclesDashboard() {
               </h1>
 
               <p>
-                Keep an eye on MOT
-                history, mileage and
-                vehicle information for
-                every car you&apos;ve
-                saved.
+                Keep an eye on MOT history,
+                mileage and vehicle information
+                for every car you&apos;ve saved.
               </p>
             </div>
 
@@ -178,27 +237,27 @@ export default function VehiclesDashboard() {
                 </strong>
 
                 <span>
-                  Getting the latest
-                  saved details.
+                  Getting your saved details.
                 </span>
               </div>
             </div>
           )}
 
-          {!loading && error && (
-            <div
-              className={styles.errorState}
-              role="alert"
-            >
-              <strong>
-                Couldn&apos;t load My Vehicles
-              </strong>
+          {!loading &&
+            error && (
+              <div
+                className={styles.errorState}
+                role="alert"
+              >
+                <strong>
+                  Couldn&apos;t load My Vehicles
+                </strong>
 
-              <p>
-                {error}
-              </p>
-            </div>
-          )}
+                <p>
+                  {error}
+                </p>
+              </div>
+            )}
 
           {!loading &&
             !error &&
@@ -217,10 +276,9 @@ export default function VehiclesDashboard() {
                 </h2>
 
                 <p>
-                  Check a registration from
-                  the homepage, then choose
-                  Add to My Vehicles to keep
-                  it here.
+                  Check a registration from the
+                  homepage, then choose Add to
+                  My Vehicles.
                 </p>
 
                 <Link

@@ -1,4 +1,8 @@
 import type {
+  User,
+} from "../types/auth";
+
+import type {
   GarageVehicle,
   MotHistoryRefreshResponse,
   MotTest,
@@ -40,6 +44,10 @@ async function apiRequest<T>(
     `${API_BASE_URL}${path}`,
     {
       ...options,
+
+      // Authentication is stored in an HttpOnly cookie.
+      credentials: "include",
+
       headers: {
         "Content-Type": "application/json",
         ...options.headers,
@@ -67,13 +75,71 @@ async function apiRequest<T>(
     );
   }
 
-  // DELETE requests return no response body.
   if (response.status === 204) {
     return undefined as T;
   }
 
   return response.json() as Promise<T>;
 }
+
+
+/* Authentication */
+
+
+export function registerUser(
+  email: string,
+  password: string,
+): Promise<User> {
+  return apiRequest<User>(
+    "/auth/register",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        email,
+        password,
+      }),
+    },
+  );
+}
+
+
+export function loginUser(
+  email: string,
+  password: string,
+): Promise<User> {
+  return apiRequest<User>(
+    "/auth/login",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        email,
+        password,
+      }),
+    },
+  );
+}
+
+
+export function logoutUser():
+  Promise<void> {
+  return apiRequest<void>(
+    "/auth/logout",
+    {
+      method: "POST",
+    },
+  );
+}
+
+
+export function getCurrentUser():
+  Promise<User> {
+  return apiRequest<User>(
+    "/auth/me",
+  );
+}
+
+
+/* Vehicle checks */
 
 
 export function checkVehicle(
@@ -89,6 +155,9 @@ export function checkVehicle(
     },
   );
 }
+
+
+/* My Vehicles */
 
 
 export function addVehicleToGarage(

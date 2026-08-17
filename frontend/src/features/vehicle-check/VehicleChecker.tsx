@@ -5,7 +5,15 @@ import {
   useState,
 } from "react";
 
+import {
+  useRouter,
+} from "next/navigation";
+
 import SiteHeader from "../../components/SiteHeader";
+
+import {
+  useAuth,
+} from "../../contexts/AuthContext";
 
 import {
   addVehicleToGarage,
@@ -31,6 +39,13 @@ import {
 
 
 export default function VehicleChecker() {
+  const router =
+    useRouter();
+
+  const {
+    user,
+  } = useAuth();
+
   const [
     registration,
     setRegistration,
@@ -133,10 +148,19 @@ export default function VehicleChecker() {
 
 
   async function handleAddToGarage() {
-    if (
-      !vehicle ||
-      vehicle.in_garage
-    ) {
+    if (!vehicle) {
+      return;
+    }
+
+    if (!user) {
+      router.push(
+        "/login"
+      );
+
+      return;
+    }
+
+    if (vehicle.in_garage) {
       return;
     }
 
@@ -158,12 +182,11 @@ export default function VehicleChecker() {
       });
 
       setNotice(
-        `Added to My Garage. ${result.mot_tests_saved} MOT ${
-          result.mot_tests_saved ===
-          1
+        `Added to My Vehicles. ${result.mot_tests_saved} MOT ${
+          result.mot_tests_saved === 1
             ? "test was"
             : "tests were"
-        } saved.`,
+        } newly saved.`,
       );
     } catch (caughtError) {
       if (
@@ -177,7 +200,7 @@ export default function VehicleChecker() {
         });
 
         setNotice(
-          "This vehicle is already in My Garage.",
+          "This vehicle is already in My Vehicles.",
         );
       } else if (
         caughtError instanceof
@@ -188,7 +211,7 @@ export default function VehicleChecker() {
         );
       } else {
         setError(
-          "We could not add the vehicle to your garage. Please try again.",
+          "We could not add the vehicle to My Vehicles. Please try again.",
         );
       }
     } finally {
@@ -235,22 +258,18 @@ export default function VehicleChecker() {
             <h1>
               Know what&apos;s happened
               <br />
-              to a car before you rely
-              on it.
+              to a car before you rely on it.
             </h1>
 
             <p className="hero-copy">
-              Check MOT history,
-              mileage and recorded
-              defects from one
+              Check MOT history, mileage and
+              recorded defects from one
               registration number.
             </p>
 
             <form
               className="registration-search"
-              onSubmit={
-                handleSearch
-              }
+              onSubmit={handleSearch}
             >
               <div className="registration-field">
                 <span
@@ -263,9 +282,7 @@ export default function VehicleChecker() {
                 <input
                   type="text"
                   value={registration}
-                  onChange={(
-                    event,
-                  ) =>
+                  onChange={(event) =>
                     setRegistration(
                       event.target.value
                         .toUpperCase(),
@@ -291,8 +308,8 @@ export default function VehicleChecker() {
             </form>
 
             <p className="search-note">
-              Checking a vehicle does
-              not add it to My Vehicles.
+              Checking a vehicle does not add
+              it to My Vehicles.
             </p>
 
             {error && (
@@ -320,11 +337,9 @@ export default function VehicleChecker() {
                   </h2>
 
                   <p>
-                    See previous
-                    tests, failures,
-                    advisories and
-                    defects in one
-                    timeline.
+                    See previous tests,
+                    failures, advisories and
+                    defects in one timeline.
                   </p>
                 </div>
 
@@ -338,10 +353,9 @@ export default function VehicleChecker() {
                   </h2>
 
                   <p>
-                    Follow recorded
-                    odometer readings
-                    across the life of
-                    the vehicle.
+                    Follow recorded odometer
+                    readings across the life
+                    of the vehicle.
                   </p>
                 </div>
 
@@ -355,11 +369,9 @@ export default function VehicleChecker() {
                   </h2>
 
                   <p>
-                    Found your own car?
-                    Add it to your
-                    vehicle collection
-                    and keep its history
-                    with you.
+                    Sign in and save your own
+                    vehicles so their history
+                    is always easy to find.
                   </p>
                 </div>
               </div>
@@ -374,14 +386,12 @@ export default function VehicleChecker() {
 
                 <div>
                   <strong>
-                    Checking DVSA
-                    records
+                    Checking DVSA records
                   </strong>
 
                   <span>
-                    Pulling together
-                    the vehicle&apos;s
-                    MOT history.
+                    Pulling together the
+                    vehicle&apos;s MOT history.
                   </span>
                 </div>
               </div>
@@ -410,17 +420,13 @@ export default function VehicleChecker() {
                     <div className="vehicle-details">
                       {vehicle.year && (
                         <span>
-                          {
-                            vehicle.year
-                          }
+                          {vehicle.year}
                         </span>
                       )}
 
                       {vehicle.fuel_type && (
                         <span>
-                          {
-                            vehicle.fuel_type
-                          }
+                          {vehicle.fuel_type}
                         </span>
                       )}
 
@@ -435,9 +441,7 @@ export default function VehicleChecker() {
 
                       {vehicle.colour && (
                         <span>
-                          {
-                            vehicle.colour
-                          }
+                          {vehicle.colour}
                         </span>
                       )}
                     </div>
@@ -461,15 +465,16 @@ export default function VehicleChecker() {
                     >
                       {vehicle.in_garage
                         ? "In My Vehicles"
-                        : addingToGarage
-                          ? "Adding..."
-                          : "Add to My Vehicles"}
+                        : !user
+                          ? "Sign in to add"
+                          : addingToGarage
+                            ? "Adding..."
+                            : "Add to My Vehicles"}
                     </button>
 
                     {vehicle.in_garage && (
                       <span className="garage-caption">
-                        MOT history
-                        saved
+                        Saved to your account
                       </span>
                     )}
                   </div>
@@ -501,9 +506,7 @@ export default function VehicleChecker() {
                     >
                       <span className="status-dot" />
 
-                      {
-                        motStatus.label
-                      }
+                      {motStatus.label}
                     </strong>
 
                     {motStatus.expiryDate ? (
@@ -511,9 +514,7 @@ export default function VehicleChecker() {
                         <span
                           className={`mot-countdown ${motStatus.tone}`}
                         >
-                          {
-                            motStatus.timeRemainingLabel
-                          }
+                          {motStatus.timeRemainingLabel}
                         </span>
 
                         <span className="stat-detail">
@@ -525,8 +526,7 @@ export default function VehicleChecker() {
                       </div>
                     ) : (
                       <span className="stat-detail">
-                        No expiry
-                        available
+                        No expiry available
                       </span>
                     )}
                   </div>
@@ -558,9 +558,7 @@ export default function VehicleChecker() {
                     </span>
 
                     <strong>
-                      {
-                        vehicle.mot_tests_found
-                      }
+                      {vehicle.mot_tests_found}
                     </strong>
 
                     <span className="stat-detail">
@@ -584,7 +582,8 @@ export default function VehicleChecker() {
 
                       <span
                         className={
-                          latestMot.test_result?.toUpperCase() ===
+                          latestMot.test_result
+                            ?.toUpperCase() ===
                           "PASSED"
                             ? "result-badge passed"
                             : "result-badge failed"
@@ -623,16 +622,11 @@ export default function VehicleChecker() {
 
                       <div>
                         <span>
-                          Recorded
-                          items
+                          Recorded items
                         </span>
 
                         <strong>
-                          {
-                            latestMot
-                              .defects
-                              .length
-                          }
+                          {latestMot.defects.length}
                         </strong>
                       </div>
                     </div>
@@ -652,13 +646,10 @@ export default function VehicleChecker() {
                 />
 
                 <p className="data-note">
-                  MOT information is
-                  retrieved from DVSA
-                  records. A vehicle
-                  check is only saved
-                  when you choose to add
-                  the vehicle to My
-                  Vehicles.
+                  MOT information is retrieved
+                  from DVSA records. A vehicle
+                  check is only saved when you
+                  choose to add it to My Vehicles.
                 </p>
               </div>
             </section>
