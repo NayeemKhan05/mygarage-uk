@@ -3,6 +3,11 @@ import type {
 } from "../types/auth";
 
 import type {
+  VehicleCheckHistoryItem,
+  VehicleCheckHistoryPayload,
+} from "../types/checkHistory";
+
+import type {
   MaintenanceItem,
   MaintenanceItemPayload,
 } from "../types/maintenance";
@@ -57,8 +62,9 @@ async function apiRequest<T>(
     );
 
   /*
-   * FormData must set its own multipart boundary,
-   * so only add JSON headers for normal API requests.
+   * FormData needs to set its own multipart
+   * boundary, so JSON headers are only added
+   * to normal API requests.
    */
   if (
     !(options.body instanceof FormData)
@@ -89,7 +95,9 @@ async function apiRequest<T>(
 
     try {
       const body =
-        (await response.json()) as ApiErrorResponse;
+        (
+          await response.json()
+        ) as ApiErrorResponse;
 
       if (body.detail) {
         message =
@@ -179,17 +187,110 @@ export function getCurrentUser():
 /* Vehicle checks */
 
 
-export function checkVehicle(
+export async function checkVehicle(
   registration: string,
 ): Promise<VehicleCheckResponse> {
-  return apiRequest<VehicleCheckResponse>(
-    "/vehicle-checks",
+  const result =
+    await apiRequest<VehicleCheckResponse>(
+      "/vehicle-checks",
+      {
+        method: "POST",
+
+        body: JSON.stringify({
+          registration,
+        }),
+      },
+    );
+
+  /*
+   * Check history is deliberately separate from
+   * the DVSA lookup. Anonymous users get no
+   * persisted history and a history failure should
+   * not break a successful vehicle check.
+   */
+  try {
+    await saveVehicleCheckHistory({
+      registration:
+        result.registration,
+
+      make:
+        result.make ?? null,
+
+      model:
+        result.model ?? null,
+
+      fuel_type:
+        result.fuel_type ?? null,
+
+      colour:
+        result.colour ?? null,
+
+      year:
+        result.year ?? null,
+    });
+
+  } catch {
+    // The live vehicle result should still be usable.
+  }
+
+  return result;
+}
+
+
+/* My Checks */
+
+
+export function saveVehicleCheckHistory(
+  payload: VehicleCheckHistoryPayload,
+): Promise<
+  VehicleCheckHistoryItem | null
+> {
+  return apiRequest<
+    VehicleCheckHistoryItem | null
+  >(
+    "/vehicle-checks/history",
     {
       method: "POST",
 
-      body: JSON.stringify({
-        registration,
-      }),
+      body: JSON.stringify(
+        payload,
+      ),
+    },
+  );
+}
+
+
+export function getVehicleCheckHistory():
+  Promise<VehicleCheckHistoryItem[]> {
+  return apiRequest<
+    VehicleCheckHistoryItem[]
+  >(
+    "/vehicle-checks/history",
+  );
+}
+
+
+export function deleteVehicleCheckHistoryItem(
+  checkId: number,
+): Promise<void> {
+  return apiRequest<void>(
+    (
+      "/vehicle-checks/history/"
+      + checkId
+    ),
+    {
+      method: "DELETE",
+    },
+  );
+}
+
+
+export function clearVehicleCheckHistory():
+  Promise<void> {
+  return apiRequest<void>(
+    "/vehicle-checks/history",
+    {
+      method: "DELETE",
     },
   );
 }
@@ -284,6 +385,7 @@ export function createServiceRecord(
     `/vehicles/${vehicleId}/service-records`,
     {
       method: "POST",
+
       body: JSON.stringify(
         payload,
       ),
@@ -304,6 +406,7 @@ export function updateServiceRecord(
     ),
     {
       method: "PUT",
+
       body: JSON.stringify(
         payload,
       ),
@@ -404,6 +507,7 @@ export function createMaintenanceItem(
     `/vehicles/${vehicleId}/maintenance`,
     {
       method: "POST",
+
       body: JSON.stringify(
         payload,
       ),
@@ -424,6 +528,7 @@ export function updateMaintenanceItem(
     ),
     {
       method: "PUT",
+
       body: JSON.stringify(
         payload,
       ),

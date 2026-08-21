@@ -1,0 +1,689 @@
+.page {
+  min-height: calc(
+    100vh - 76px
+  );
+
+  background:
+    var(--background);
+}
+
+
+.inner {
+  width: min(
+    1080px,
+    calc(100% - 40px)
+  );
+
+  margin: 0 auto;
+
+  padding:
+    54px 0 70px;
+}
+
+
+.heading {
+  margin-bottom: 30px;
+
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+
+  gap: 25px;
+}
+
+
+.eyebrow {
+  display: block;
+
+  margin-bottom: 7px;
+
+  color:
+    #788077;
+
+  font-size: 11px;
+  font-weight: 750;
+
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+
+.heading h1 {
+  margin: 0;
+
+  color:
+    var(--text);
+
+  font-size: clamp(
+    32px,
+    5vw,
+    46px
+  );
+
+  font-weight: 650;
+
+  letter-spacing:
+    -0.045em;
+}
+
+
+.heading p {
+  max-width: 620px;
+
+  margin:
+    10px 0 0;
+
+  color:
+    var(--muted);
+
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+
+.clearButton {
+  min-height: 40px;
+
+  flex: 0 0 auto;
+
+  padding:
+    0 14px;
+
+  border:
+    1px solid
+    #dfc5c5;
+
+  border-radius:
+    9px;
+
+  background:
+    white;
+
+  color:
+    var(--red);
+
+  font-size: 11px;
+  font-weight: 700;
+
+  cursor: pointer;
+}
+
+
+.clearButton:hover {
+  background:
+    var(--red-light);
+}
+
+
+.clearButton:disabled {
+  cursor: not-allowed;
+
+  opacity: 0.55;
+}
+
+
+.notice {
+  margin-bottom: 20px;
+
+  padding:
+    12px 14px;
+
+  border:
+    1px solid
+    #c7ddce;
+
+  border-radius:
+    10px;
+
+  background:
+    var(--green-light);
+
+  color:
+    var(--green);
+
+  font-size: 12px;
+}
+
+
+.error {
+  margin-bottom: 20px;
+
+  padding:
+    12px 14px;
+
+  border:
+    1px solid
+    #e4c2c0;
+
+  border-radius:
+    10px;
+
+  background:
+    var(--red-light);
+
+  color:
+    #842d2d;
+
+  font-size: 12px;
+}
+
+
+.loading {
+  min-height: 190px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 13px;
+
+  border:
+    1px solid
+    var(--border);
+
+  border-radius:
+    var(--radius);
+
+  background:
+    var(--surface);
+
+  color:
+    var(--muted);
+
+  font-size: 13px;
+}
+
+
+.empty {
+  padding:
+    52px 30px;
+
+  border:
+    1px solid
+    var(--border);
+
+  border-radius:
+    var(--radius);
+
+  background:
+    var(--surface);
+
+  text-align:
+    center;
+}
+
+
+.emptyIcon {
+  width: 54px;
+  height: 54px;
+
+  margin:
+    0 auto 17px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 50%;
+
+  background:
+    var(--green-light);
+
+  color:
+    var(--green);
+
+  font-size: 22px;
+  font-weight: 700;
+}
+
+
+.empty h2 {
+  margin:
+    0 0 8px;
+
+  font-size: 20px;
+}
+
+
+.empty p {
+  max-width: 450px;
+
+  margin:
+    0 auto 20px;
+
+  color:
+    var(--muted);
+
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+
+.checkVehicleLink {
+  min-height: 42px;
+
+  padding:
+    0 16px;
+
+  display:
+    inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border-radius:
+    9px;
+
+  background:
+    var(--green);
+
+  color: white;
+
+  font-size: 12px;
+  font-weight: 700;
+
+  text-decoration: none;
+}
+
+
+.grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(
+      2,
+      minmax(0, 1fr)
+    );
+
+  gap: 15px;
+}
+
+
+.card {
+  padding:
+    20px;
+
+  border:
+    1px solid
+    var(--border);
+
+  border-radius:
+    15px;
+
+  background:
+    var(--surface);
+
+  box-shadow:
+    0 8px 28px
+    rgba(
+      27,
+      37,
+      29,
+      0.03
+    );
+}
+
+
+.cardTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+
+  gap: 16px;
+}
+
+
+.numberPlate {
+  display: inline-block;
+
+  padding:
+    7px 12px;
+
+  border-radius:
+    6px;
+
+  background:
+    var(--plate);
+
+  box-shadow:
+    inset 0 0 0 2px
+    rgba(
+      0,
+      0,
+      0,
+      0.07
+    );
+
+  color: #111;
+
+  font-family:
+    var(--plate-font);
+
+  font-size: 18px;
+  font-weight: 800;
+
+  letter-spacing:
+    0.08em;
+}
+
+
+.garageBadge {
+  padding:
+    5px 8px;
+
+  border-radius:
+    999px;
+
+  background:
+    var(--green-light);
+
+  color:
+    var(--green);
+
+  font-size: 9px;
+  font-weight: 800;
+
+  letter-spacing:
+    0.04em;
+  text-transform:
+    uppercase;
+}
+
+
+.unsavedBadge {
+  padding:
+    5px 8px;
+
+  border-radius:
+    999px;
+
+  background:
+    #eff0ed;
+
+  color:
+    #737970;
+
+  font-size: 9px;
+  font-weight: 800;
+
+  letter-spacing:
+    0.04em;
+  text-transform:
+    uppercase;
+}
+
+
+.vehicleName {
+  margin:
+    15px 0 5px;
+
+  color:
+    var(--text);
+
+  font-size: 20px;
+  font-weight: 650;
+
+  letter-spacing:
+    -0.025em;
+}
+
+
+.vehicleMeta {
+  min-height: 21px;
+
+  display: flex;
+  flex-wrap: wrap;
+
+  gap: 6px;
+}
+
+
+.vehicleMeta span {
+  padding:
+    4px 7px;
+
+  border-radius:
+    6px;
+
+  background:
+    var(--surface-soft);
+
+  color:
+    var(--muted);
+
+  font-size: 10px;
+}
+
+
+.checkDetails {
+  margin-top: 17px;
+
+  padding:
+    12px;
+
+  display: grid;
+
+  grid-template-columns:
+    repeat(
+      2,
+      minmax(0, 1fr)
+    );
+
+  gap: 10px;
+
+  border-radius:
+    10px;
+
+  background:
+    var(--surface-soft);
+}
+
+
+.detail {
+  min-width: 0;
+}
+
+
+.detail span,
+.detail strong {
+  display: block;
+}
+
+
+.detail span {
+  margin-bottom:
+    4px;
+
+  color:
+    var(--muted);
+
+  font-size: 9px;
+  font-weight: 700;
+
+  letter-spacing:
+    0.04em;
+  text-transform:
+    uppercase;
+}
+
+
+.detail strong {
+  overflow: hidden;
+
+  color:
+    var(--text);
+
+  font-size: 11px;
+  font-weight: 650;
+
+  text-overflow:
+    ellipsis;
+
+  white-space:
+    nowrap;
+}
+
+
+.actions {
+  margin-top: 16px;
+
+  padding-top: 14px;
+
+  display: flex;
+  flex-wrap: wrap;
+
+  gap: 7px;
+
+  border-top:
+    1px solid
+    #eceeea;
+}
+
+
+.primaryButton,
+.secondaryButton,
+.dangerButton {
+  min-height: 36px;
+
+  padding:
+    0 11px;
+
+  border-radius:
+    8px;
+
+  font-size: 10px;
+  font-weight: 700;
+
+  cursor: pointer;
+}
+
+
+.primaryButton {
+  border: 0;
+
+  background:
+    var(--green);
+
+  color: white;
+}
+
+
+.secondaryButton {
+  border:
+    1px solid
+    #cfd4ce;
+
+  background:
+    white;
+
+  color:
+    var(--green);
+}
+
+
+.dangerButton {
+  margin-left: auto;
+
+  border:
+    1px solid
+    #e2c7c7;
+
+  background:
+    white;
+
+  color:
+    var(--red);
+}
+
+
+.dangerButton:hover {
+  background:
+    var(--red-light);
+}
+
+
+.primaryButton:disabled,
+.secondaryButton:disabled,
+.dangerButton:disabled {
+  cursor: not-allowed;
+
+  opacity: 0.55;
+}
+
+
+@media (
+  max-width: 760px
+) {
+  .inner {
+    width: min(
+      100% - 28px,
+      1080px
+    );
+
+    padding-top:
+      38px;
+  }
+
+
+  .heading {
+    align-items:
+      flex-start;
+
+    flex-direction:
+      column;
+  }
+
+
+  .clearButton {
+    width: 100%;
+  }
+
+
+  .grid {
+    grid-template-columns:
+      1fr;
+  }
+}
+
+
+@media (
+  max-width: 480px
+) {
+  .card {
+    padding: 17px;
+  }
+
+
+  .cardTop {
+    flex-direction:
+      column;
+  }
+
+
+  .checkDetails {
+    grid-template-columns:
+      1fr;
+  }
+
+
+  .actions {
+    display: grid;
+
+    grid-template-columns:
+      1fr 1fr;
+  }
+
+
+  .primaryButton,
+  .secondaryButton,
+  .dangerButton {
+    width: 100%;
+  }
+
+
+  .dangerButton {
+    margin-left: 0;
+
+    grid-column:
+      1 / -1;
+  }
+}
