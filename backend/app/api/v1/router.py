@@ -2,6 +2,7 @@ from fastapi import APIRouter
 
 from app.api.v1.routes import (
     auth,
+    check_history,
     health,
     maintenance,
     service_records,
@@ -30,6 +31,13 @@ api_router.include_router(
     vehicle_checks.router,
     prefix="/vehicle-checks",
     tags=["vehicle checks"],
+)
+
+
+api_router.include_router(
+    check_history.router,
+    prefix="/vehicle-checks",
+    tags=["check history"],
 )
 
 

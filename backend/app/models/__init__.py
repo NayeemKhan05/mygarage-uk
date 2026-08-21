@@ -4,6 +4,7 @@ from app.models.service import ServiceReceipt, ServiceRecord
 from app.models.user import User
 from app.models.user_vehicle import UserVehicle
 from app.models.vehicle import Vehicle
+from app.models.vehicle_check_history import VehicleCheckHistory
 
 
 __all__ = [
@@ -15,4 +16,5 @@ __all__ = [
     "ServiceRecord",
     "ServiceReceipt",
     "MaintenanceItem",
+    "VehicleCheckHistory",
 ]
