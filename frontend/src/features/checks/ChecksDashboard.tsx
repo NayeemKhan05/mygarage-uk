@@ -3,10 +3,12 @@
 import {
   useCallback,
   useEffect,
+  useMemo,
   useState,
 } from "react";
 
 import Link from "next/link";
+
 import {
   useRouter,
 } from "next/navigation";
@@ -45,29 +47,39 @@ function formatCheckedAt(
 
   if (
     Number.isNaN(
-      date.getTime()
+      date.getTime(),
     )
   ) {
     return "Unknown";
   }
 
-  return new Intl.DateTimeFormat(
-    "en-GB",
-    {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    },
-  ).format(date);
+  const formatted =
+    new Intl.DateTimeFormat(
+      "en-GB",
+      {
+        day: "2-digit",
+        month: "short",
+        year: "2-digit",
+
+        hour: "2-digit",
+        minute: "2-digit",
+
+        hour12: false,
+      },
+    ).format(date);
+
+  return formatted.replace(
+    ",",
+    " ·",
+  );
 }
 
 
 function vehicleName(
-  item: VehicleCheckHistoryItem,
+  item:
+    VehicleCheckHistoryItem,
 ): string {
-  const name = [
+  const value = [
     item.make,
     item.model,
   ]
@@ -75,20 +87,32 @@ function vehicleName(
     .join(" ");
 
   return (
-    name
+    value
     || "Vehicle details unavailable"
   );
+}
+
+
+function vehicleMeta(
+  item:
+    VehicleCheckHistoryItem,
+): string {
+  return [
+    item.year,
+    item.fuel_type,
+    item.colour,
+  ]
+    .filter(Boolean)
+    .join(" · ");
 }
 
 
 function checkCountLabel(
   count: number,
 ): string {
-  if (count === 1) {
-    return "Checked once";
-  }
-
-  return `Checked ${count} times`;
+  return count === 1
+    ? "1"
+    : count.toString();
 }
 
 
@@ -98,8 +122,10 @@ export default function ChecksDashboard() {
 
   const {
     user,
-    loading: authLoading,
-  } = useAuth();
+    loading:
+      authLoading,
+  } =
+    useAuth();
 
   const [
     checks,
@@ -108,6 +134,12 @@ export default function ChecksDashboard() {
     useState<
       VehicleCheckHistoryItem[]
     >([]);
+
+  const [
+    searchQuery,
+    setSearchQuery,
+  ] =
+    useState("");
 
   const [
     loading,
@@ -119,25 +151,25 @@ export default function ChecksDashboard() {
     checkingId,
     setCheckingId,
   ] =
-    useState<number | null>(
-      null,
-    );
+    useState<
+      number | null
+    >(null);
 
   const [
     addingId,
     setAddingId,
   ] =
-    useState<number | null>(
-      null,
-    );
+    useState<
+      number | null
+    >(null);
 
   const [
     deletingId,
     setDeletingId,
   ] =
-    useState<number | null>(
-      null,
-    );
+    useState<
+      number | null
+    >(null);
 
   const [
     clearing,
@@ -149,24 +181,22 @@ export default function ChecksDashboard() {
     error,
     setError,
   ] =
-    useState<string | null>(
-      null,
-    );
+    useState<
+      string | null
+    >(null);
 
   const [
     notice,
     setNotice,
   ] =
-    useState<string | null>(
-      null,
-    );
+    useState<
+      string | null
+    >(null);
 
 
   const loadChecks =
     useCallback(
       async () => {
-        setError(null);
-
         try {
           const result =
             await getVehicleCheckHistory();
@@ -175,14 +205,17 @@ export default function ChecksDashboard() {
             result,
           );
 
-        } catch (caughtError) {
+        } catch (
+          caughtError
+        ) {
           if (
-            caughtError instanceof
-            ApiError
+            caughtError
+            instanceof ApiError
           ) {
             setError(
               caughtError.message,
             );
+
           } else {
             setError(
               "We could not load your recent checks.",
@@ -190,7 +223,9 @@ export default function ChecksDashboard() {
           }
 
         } finally {
-          setLoading(false);
+          setLoading(
+            false,
+          );
         }
       },
       [],
@@ -204,7 +239,7 @@ export default function ChecksDashboard() {
 
     if (!user) {
       router.replace(
-        "/login"
+        "/login",
       );
 
       return;
@@ -220,8 +255,51 @@ export default function ChecksDashboard() {
   ]);
 
 
+  const visibleChecks =
+    useMemo(
+      () => {
+        const query =
+          searchQuery
+            .trim()
+            .toLowerCase();
+
+        if (!query) {
+          return checks;
+        }
+
+        return checks.filter(
+          (item) => {
+            const searchable =
+              [
+                item.registration,
+                item.make,
+                item.model,
+                item.year,
+                item.fuel_type,
+                item.colour,
+              ]
+                .filter(
+                  Boolean,
+                )
+                .join(" ")
+                .toLowerCase();
+
+            return searchable.includes(
+              query,
+            );
+          },
+        );
+      },
+      [
+        checks,
+        searchQuery,
+      ],
+    );
+
+
   async function handleCheckAgain(
-    item: VehicleCheckHistoryItem,
+    item:
+      VehicleCheckHistoryItem,
   ) {
     setCheckingId(
       item.id,
@@ -246,14 +324,17 @@ export default function ChecksDashboard() {
         ),
       );
 
-    } catch (caughtError) {
+    } catch (
+      caughtError
+    ) {
       if (
-        caughtError instanceof
-        ApiError
+        caughtError
+        instanceof ApiError
       ) {
         setError(
           caughtError.message,
         );
+
       } else {
         setError(
           "We could not check this vehicle.",
@@ -269,7 +350,8 @@ export default function ChecksDashboard() {
 
 
   async function handleAddVehicle(
-    item: VehicleCheckHistoryItem,
+    item:
+      VehicleCheckHistoryItem,
   ) {
     setAddingId(
       item.id,
@@ -293,14 +375,17 @@ export default function ChecksDashboard() {
         ),
       );
 
-    } catch (caughtError) {
+    } catch (
+      caughtError
+    ) {
       if (
-        caughtError instanceof
-        ApiError
+        caughtError
+        instanceof ApiError
       ) {
         setError(
           caughtError.message,
         );
+
       } else {
         setError(
           "We could not add this vehicle.",
@@ -316,7 +401,8 @@ export default function ChecksDashboard() {
 
 
   async function handleDelete(
-    item: VehicleCheckHistoryItem,
+    item:
+      VehicleCheckHistoryItem,
   ) {
     const confirmed =
       window.confirm(
@@ -344,21 +430,27 @@ export default function ChecksDashboard() {
       );
 
       setChecks(
-        (current) =>
+        (
+          current,
+        ) =>
           current.filter(
             (check) =>
-              check.id !== item.id,
+              check.id
+              !== item.id,
           ),
       );
 
-    } catch (caughtError) {
+    } catch (
+      caughtError
+    ) {
       if (
-        caughtError instanceof
-        ApiError
+        caughtError
+        instanceof ApiError
       ) {
         setError(
           caughtError.message,
         );
+
       } else {
         setError(
           "We could not remove this check.",
@@ -376,7 +468,10 @@ export default function ChecksDashboard() {
   async function handleClearAll() {
     const confirmed =
       window.confirm(
-        "Clear your entire vehicle check history?",
+        (
+          "Clear your entire "
+          + "vehicle check history?"
+        ),
       );
 
     if (!confirmed) {
@@ -391,19 +486,23 @@ export default function ChecksDashboard() {
       await clearVehicleCheckHistory();
 
       setChecks([]);
+      setSearchQuery("");
 
       setNotice(
         "Your check history was cleared.",
       );
 
-    } catch (caughtError) {
+    } catch (
+      caughtError
+    ) {
       if (
-        caughtError instanceof
-        ApiError
+        caughtError
+        instanceof ApiError
       ) {
         setError(
           caughtError.message,
         );
+
       } else {
         setError(
           "We could not clear your check history.",
@@ -411,7 +510,9 @@ export default function ChecksDashboard() {
       }
 
     } finally {
-      setClearing(false);
+      setClearing(
+        false,
+      );
     }
   }
 
@@ -426,9 +527,21 @@ export default function ChecksDashboard() {
           activePage="checks"
         />
 
-        <main className={styles.page}>
-          <div className={styles.inner}>
-            <div className={styles.loading}>
+        <main
+          className={
+            styles.page
+          }
+        >
+          <div
+            className={
+              styles.inner
+            }
+          >
+            <div
+              className={
+                styles.loading
+              }
+            >
               <div className="loader" />
 
               Loading My Checks...
@@ -446,12 +559,28 @@ export default function ChecksDashboard() {
         activePage="checks"
       />
 
-      <main className={styles.page}>
-        <div className={styles.inner}>
-          <div className={styles.heading}>
+      <main
+        className={
+          styles.page
+        }
+      >
+        <div
+          className={
+            styles.inner
+          }
+        >
+          <div
+            className={
+              styles.heading
+            }
+          >
             <div>
-              <span className={styles.eyebrow}>
-                Recent lookups
+              <span
+                className={
+                  styles.eyebrow
+                }
+              >
+                Vehicle history
               </span>
 
               <h1>
@@ -459,36 +588,30 @@ export default function ChecksDashboard() {
               </h1>
 
               <p>
-                Registrations you have recently
-                checked. Checking a vehicle here
-                does not add it to My Vehicles
-                unless you choose to save it.
+                Vehicles you&apos;ve recently
+                checked while signed in.
+                Search history stays separate
+                from My Vehicles until you
+                choose to save a car.
               </p>
             </div>
-
-            {checks.length > 0 && (
-              <button
-                className={styles.clearButton}
-                type="button"
-                disabled={clearing}
-                onClick={handleClearAll}
-              >
-                {clearing
-                  ? "Clearing..."
-                  : "Clear history"}
-              </button>
-            )}
           </div>
 
           {notice && (
-            <div className={styles.notice}>
+            <div
+              className={
+                styles.notice
+              }
+            >
               {notice}
             </div>
           )}
 
           {error && (
             <div
-              className={styles.error}
+              className={
+                styles.error
+              }
               role="alert"
             >
               {error}
@@ -496,15 +619,27 @@ export default function ChecksDashboard() {
           )}
 
           {loading ? (
-            <div className={styles.loading}>
+            <div
+              className={
+                styles.loading
+              }
+            >
               <div className="loader" />
 
               Loading your vehicle checks...
             </div>
 
           ) : checks.length === 0 ? (
-            <div className={styles.empty}>
-              <div className={styles.emptyIcon}>
+            <div
+              className={
+                styles.empty
+              }
+            >
+              <div
+                className={
+                  styles.emptyIcon
+                }
+              >
                 ?
               </div>
 
@@ -519,7 +654,9 @@ export default function ChecksDashboard() {
               </p>
 
               <Link
-                className={styles.checkVehicleLink}
+                className={
+                  styles.checkVehicleLink
+                }
                 href="/"
               >
                 Check a vehicle
@@ -527,165 +664,394 @@ export default function ChecksDashboard() {
             </div>
 
           ) : (
-            <div className={styles.grid}>
-              {checks.map(
-                (item) => (
-                  <article
-                    className={styles.card}
-                    key={item.id}
+            <section
+              className={
+                styles.historyPanel
+              }
+            >
+              <div
+                className={
+                  styles.toolbar
+                }
+              >
+                <div
+                  className={
+                    styles.toolbarTitle
+                  }
+                >
+                  <strong>
+                    Recent checks
+                  </strong>
+
+                  <span>
+                    {checks.length}{" "}
+                    {checks.length === 1
+                      ? "vehicle"
+                      : "vehicles"}
+                  </span>
+                </div>
+
+                <div
+                  className={
+                    styles.toolbarActions
+                  }
+                >
+                  <div
+                    className={
+                      styles.searchWrap
+                    }
                   >
-                    <div className={styles.cardTop}>
-                      <span className={styles.numberPlate}>
-                        {formatRegistration(
-                          item.registration,
-                        )}
-                      </span>
+                    <span
+                      className={
+                        styles.searchIcon
+                      }
+                      aria-hidden="true"
+                    >
+                      ⌕
+                    </span>
 
-                      <span
-                        className={
-                          item.in_garage
-                            ? styles.garageBadge
-                            : styles.unsavedBadge
-                        }
-                      >
-                        {item.in_garage
-                          ? "In My Vehicles"
-                          : "Not saved"}
-                      </span>
-                    </div>
-
-                    <h2 className={styles.vehicleName}>
-                      {vehicleName(
-                        item,
-                      )}
-                    </h2>
-
-                    <div className={styles.vehicleMeta}>
-                      {item.year && (
-                        <span>
-                          {item.year}
-                        </span>
-                      )}
-
-                      {item.fuel_type && (
-                        <span>
-                          {item.fuel_type}
-                        </span>
-                      )}
-
-                      {item.colour && (
-                        <span>
-                          {item.colour}
-                        </span>
-                      )}
-                    </div>
-
-                    <div className={styles.checkDetails}>
-                      <div className={styles.detail}>
-                        <span>
-                          Last checked
-                        </span>
-
-                        <strong>
-                          {formatCheckedAt(
-                            item.last_checked_at,
-                          )}
-                        </strong>
-                      </div>
-
-                      <div className={styles.detail}>
-                        <span>
-                          Check history
-                        </span>
-
-                        <strong>
-                          {checkCountLabel(
-                            item.check_count,
-                          )}
-                        </strong>
-                      </div>
-                    </div>
-
-                    <div className={styles.actions}>
-                      <button
-                        className={styles.secondaryButton}
-                        type="button"
-                        disabled={
-                          checkingId
-                          !== null
-                        }
-                        onClick={() =>
-                          handleCheckAgain(
-                            item,
-                          )
-                        }
-                      >
-                        {checkingId === item.id
-                          ? "Checking..."
-                          : "Check again"}
-                      </button>
-
-                      {item.in_garage
-                        && item.garage_vehicle_id
-                        ? (
-                          <button
-                            className={styles.primaryButton}
-                            type="button"
-                            onClick={() =>
-                              router.push(
-                                (
-                                  "/vehicles/"
-                                  + item.garage_vehicle_id
-                                ),
-                              )
-                            }
-                          >
-                            View vehicle
-                          </button>
-                        )
-                        : (
-                          <button
-                            className={styles.primaryButton}
-                            type="button"
-                            disabled={
-                              addingId
-                              !== null
-                            }
-                            onClick={() =>
-                              handleAddVehicle(
-                                item,
-                              )
-                            }
-                          >
-                            {addingId === item.id
-                              ? "Adding..."
-                              : "Add to My Vehicles"}
-                          </button>
+                    <input
+                      className={
+                        styles.searchInput
+                      }
+                      type="search"
+                      placeholder="Search reg, make or model"
+                      value={
+                        searchQuery
+                      }
+                      onChange={(
+                        event,
+                      ) =>
+                        setSearchQuery(
+                          event.target.value,
                         )
                       }
+                      aria-label="Search vehicle checks"
+                    />
+                  </div>
 
-                      <button
-                        className={styles.dangerButton}
-                        type="button"
-                        disabled={
-                          deletingId
-                          !== null
+                  <button
+                    className={
+                      styles.clearButton
+                    }
+                    type="button"
+                    disabled={
+                      clearing
+                    }
+                    onClick={
+                      handleClearAll
+                    }
+                  >
+                    {clearing
+                      ? "Clearing..."
+                      : "Clear history"}
+                  </button>
+                </div>
+              </div>
+
+              <div
+                className={
+                  styles.tableHeader
+                }
+                aria-hidden="true"
+              >
+                <span>
+                  Registration
+                </span>
+
+                <span>
+                  Vehicle
+                </span>
+
+                <span>
+                  Last checked
+                </span>
+
+                <span>
+                  Checks
+                </span>
+
+                <span>
+                  Status
+                </span>
+
+                <span>
+                  Actions
+                </span>
+              </div>
+
+              {visibleChecks.length === 0 ? (
+                <div
+                  className={
+                    styles.noResults
+                  }
+                >
+                  No checks match
+                  &ldquo;{searchQuery}&rdquo;.
+                </div>
+
+              ) : (
+                <div
+                  className={
+                    styles.rows
+                  }
+                >
+                  {visibleChecks.map(
+                    (item) => (
+                      <article
+                        className={
+                          styles.checkRow
                         }
-                        onClick={() =>
-                          handleDelete(
-                            item,
-                          )
+                        key={
+                          item.id
                         }
                       >
-                        {deletingId === item.id
-                          ? "Removing..."
-                          : "Remove"}
-                      </button>
-                    </div>
-                  </article>
-                ),
+                        <div
+                          className={
+                            styles.registrationCell
+                          }
+                        >
+                          <span
+                            className={
+                              styles.mobileLabel
+                            }
+                          >
+                            Registration
+                          </span>
+
+                          <span
+                            className={
+                              styles.numberPlate
+                            }
+                          >
+                            {formatRegistration(
+                              item.registration,
+                            )}
+                          </span>
+                        </div>
+
+                        <div
+                          className={
+                            styles.vehicleCell
+                          }
+                        >
+                          <span
+                            className={
+                              styles.mobileLabel
+                            }
+                          >
+                            Vehicle
+                          </span>
+
+                          <strong>
+                            {vehicleName(
+                              item,
+                            )}
+                          </strong>
+
+                          <span
+                            className={
+                              styles.vehicleMeta
+                            }
+                          >
+                            {vehicleMeta(
+                              item,
+                            )
+                              || "No additional details"}
+                          </span>
+                        </div>
+
+                        <div
+                          className={
+                            styles.dateCell
+                          }
+                        >
+                          <span
+                            className={
+                              styles.mobileLabel
+                            }
+                          >
+                            Last checked
+                          </span>
+
+                          <span>
+                            {formatCheckedAt(
+                              item.last_checked_at,
+                            )}
+                          </span>
+                        </div>
+
+                        <div
+                          className={
+                            styles.countCell
+                          }
+                        >
+                          <span
+                            className={
+                              styles.mobileLabel
+                            }
+                          >
+                            Checks
+                          </span>
+
+                          <span
+                            className={
+                              styles.countBadge
+                            }
+                          >
+                            {checkCountLabel(
+                              item.check_count,
+                            )}
+                          </span>
+                        </div>
+
+                        <div
+                          className={
+                            styles.statusCell
+                          }
+                        >
+                          <span
+                            className={
+                              styles.mobileLabel
+                            }
+                          >
+                            Status
+                          </span>
+
+                          <span
+                            className={
+                              item.in_garage
+                                ? styles.savedBadge
+                                : styles.unsavedBadge
+                            }
+                          >
+                            {item.in_garage
+                              ? "In My Vehicles"
+                              : "Not saved"}
+                          </span>
+                        </div>
+
+                        <div
+                          className={
+                            styles.actions
+                          }
+                        >
+                          <span
+                            className={
+                              styles.mobileLabel
+                            }
+                          >
+                            Actions
+                          </span>
+
+                          <div
+                            className={
+                              styles.actionButtons
+                            }
+                          >
+                            <button
+                              className={
+                                styles.textButton
+                              }
+                              type="button"
+                              disabled={
+                                checkingId
+                                === item.id
+                              }
+                              onClick={() =>
+                                handleCheckAgain(
+                                  item,
+                                )
+                              }
+                            >
+                              {checkingId
+                                === item.id
+                                ? "Checking..."
+                                : "Check again"}
+                            </button>
+
+                            {item.in_garage
+                              && item.garage_vehicle_id
+                              ? (
+                                <button
+                                  className={
+                                    styles.primaryButton
+                                  }
+                                  type="button"
+                                  onClick={() =>
+                                    router.push(
+                                      (
+                                        "/vehicles/"
+                                        + item.garage_vehicle_id
+                                      ),
+                                    )
+                                  }
+                                >
+                                  View
+                                </button>
+                              )
+                              : (
+                                <button
+                                  className={
+                                    styles.primaryButton
+                                  }
+                                  type="button"
+                                  disabled={
+                                    addingId
+                                    === item.id
+                                  }
+                                  onClick={() =>
+                                    handleAddVehicle(
+                                      item,
+                                    )
+                                  }
+                                >
+                                  {addingId
+                                    === item.id
+                                    ? "Adding..."
+                                    : "Add"}
+                                </button>
+                              )
+                            }
+
+                            <button
+                              className={
+                                styles.removeButton
+                              }
+                              type="button"
+                              disabled={
+                                deletingId
+                                === item.id
+                              }
+                              onClick={() =>
+                                handleDelete(
+                                  item,
+                                )
+                              }
+                              aria-label={
+                                (
+                                  "Remove "
+                                  + formatRegistration(
+                                    item.registration,
+                                  )
+                                  + " from My Checks"
+                                )
+                              }
+                              title="Remove from My Checks"
+                            >
+                              {deletingId
+                                === item.id
+                                ? "..."
+                                : "×"}
+                            </button>
+                          </div>
+                        </div>
+                      </article>
+                    ),
+                  )}
+                </div>
               )}
-            </div>
+            </section>
           )}
         </div>
       </main>

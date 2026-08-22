@@ -1,0 +1,70 @@
+/*
+ * DVLA's design resources provide a dedicated UK
+ * number plate webfont for displaying registration marks.
+ */
+@import url(
+  "https://dvladesign.herokuapp.com/public/stylesheets/numberplate.css"
+);
+
+
+:root {
+  --plate-font:
+    "uknumberplateregular",
+    "Charles Wright",
+    "Arial Narrow",
+    "Nimbus Sans Narrow",
+    "Liberation Sans Narrow",
+    Arial,
+    sans-serif;
+
+  --plate-yellow: #ffd307;
+  --plate-border: #e2b900;
+}
+
+
+/*
+ * Keep registration marks visually consistent across
+ * the homepage, My Checks and My Vehicles.
+ *
+ * Individual components can still choose an appropriate
+ * font size and padding for their context.
+ */
+.number-plate,
+[class*="numberPlate"] {
+  font-family:
+    var(--plate-font) !important;
+
+  font-weight:
+    400 !important;
+
+  font-style:
+    normal !important;
+
+  font-synthesis:
+    none;
+
+  letter-spacing:
+    0.055em !important;
+
+  text-transform:
+    uppercase;
+
+  background:
+    var(--plate-yellow) !important;
+
+  color:
+    #111 !important;
+
+  border-color:
+    var(--plate-border) !important;
+
+  box-shadow:
+    none !important;
+}
+
+
+/*
+ * Existing registration inputs already use --plate-font
+ * in MyGarage, so overriding the variable above also keeps
+ * those consistent with displayed number plates.
+ */
