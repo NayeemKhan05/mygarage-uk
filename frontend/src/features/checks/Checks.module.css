@@ -524,18 +524,17 @@
     grid;
 
   grid-template-columns:
-    145px
-    minmax(200px, 1fr)
     150px
-    58px
-    116px
-    200px;
+    minmax(260px, 1fr)
+    180px
+    150px
+    220px;
 
   align-items:
     center;
 
   column-gap:
-    14px;
+    20px;
 }
 
 
@@ -732,7 +731,7 @@
 }
 
 
-/* Metadata */
+/* Date */
 
 
 .dateCell {
@@ -747,51 +746,6 @@
 
   white-space:
     nowrap;
-}
-
-
-.countCell {
-  display:
-    flex;
-
-  align-items:
-    center;
-}
-
-
-.countBadge {
-  min-width:
-    26px;
-
-  height:
-    26px;
-
-  padding:
-    0 6px;
-
-  display:
-    inline-flex;
-
-  align-items:
-    center;
-
-  justify-content:
-    center;
-
-  border-radius:
-    7px;
-
-  background:
-    #f0f2ef;
-
-  color:
-    #545a53;
-
-  font-size:
-    10px;
-
-  font-weight:
-    700;
 }
 
 
@@ -873,7 +827,7 @@
     center;
 
   justify-content:
-    flex-end;
+    flex-start;
 
   gap:
     5px;
@@ -1022,9 +976,6 @@
 }
 
 
-/* Tablet */
-
-
 @media (
   max-width: 1000px
 ) {
@@ -1032,25 +983,15 @@
   .checkRow {
     grid-template-columns:
       135px
-      minmax(180px, 1fr)
-      140px
-      54px
-      110px
-      174px;
+      minmax(210px, 1fr)
+      155px
+      125px
+      190px;
 
     column-gap:
-      10px;
-  }
-
-
-  .textButton {
-    padding:
-      0 7px;
+      12px;
   }
 }
-
-
-/* Mobile/tablet stacked rows */
 
 
 @media (
@@ -1138,7 +1079,6 @@
 
 
   .dateCell,
-  .countCell,
   .statusCell {
     display:
       flex;
@@ -1196,9 +1136,6 @@
       uppercase;
   }
 }
-
-
-/* Small phones */
 
 
 @media (

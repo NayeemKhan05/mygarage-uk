@@ -68,14 +68,13 @@ class VehicleCheckHistoryRead(BaseModel):
 
     make: str | None
     model: str | None
+
     fuel_type: str | None
     colour: str | None
     year: int | None
 
     first_checked_at: datetime
     last_checked_at: datetime
-
-    check_count: int
 
     in_garage: bool = False
     garage_vehicle_id: int | None = None

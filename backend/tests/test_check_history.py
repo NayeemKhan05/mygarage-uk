@@ -49,11 +49,25 @@ def test_authenticated_user_can_save_check(
         == "AB12CDE"
     )
 
-    assert result["make"] == "Honda"
-    assert result["model"] == "Civic"
+    assert (
+        result["make"]
+        == "Honda"
+    )
 
-    assert result["check_count"] == 1
-    assert result["in_garage"] is False
+    assert (
+        result["model"]
+        == "Civic"
+    )
+
+    assert (
+        result["in_garage"]
+        is False
+    )
+
+    assert (
+        "check_count"
+        not in result
+    )
 
     history_response = (
         authenticated_client.get(
@@ -77,28 +91,50 @@ def test_authenticated_user_can_save_check(
 def test_repeated_check_updates_existing_entry(
     authenticated_client,
 ):
-    authenticated_client.post(
-        "/api/v1/vehicle-checks/history",
-        json=check_payload(),
+    first_response = (
+        authenticated_client.post(
+            "/api/v1/vehicle-checks/history",
+            json=check_payload(),
+        )
+    )
+
+    first_item = (
+        first_response.json()
     )
 
     second_payload = (
         check_payload()
     )
 
-    second_payload["colour"] = "Blue"
+    second_payload[
+        "colour"
+    ] = "Blue"
 
-    response = authenticated_client.post(
-        "/api/v1/vehicle-checks/history",
-        json=second_payload,
+    second_response = (
+        authenticated_client.post(
+            "/api/v1/vehicle-checks/history",
+            json=second_payload,
+        )
     )
 
-    assert response.status_code == 200
+    assert (
+        second_response.status_code
+        == 200
+    )
 
-    result = response.json()
+    second_item = (
+        second_response.json()
+    )
 
-    assert result["check_count"] == 2
-    assert result["colour"] == "Blue"
+    assert (
+        second_item["id"]
+        == first_item["id"]
+    )
+
+    assert (
+        second_item["colour"]
+        == "Blue"
+    )
 
     history_response = (
         authenticated_client.get(
@@ -111,7 +147,16 @@ def test_repeated_check_updates_existing_entry(
     )
 
     assert len(history) == 1
-    assert history[0]["check_count"] == 2
+
+    assert (
+        history[0]["colour"]
+        == "Blue"
+    )
+
+    assert (
+        "check_count"
+        not in history[0]
+    )
 
 
 def test_registration_is_normalised(
@@ -127,7 +172,9 @@ def test_registration_is_normalised(
     assert response.status_code == 200
 
     assert (
-        response.json()["registration"]
+        response.json()[
+            "registration"
+        ]
         == "AB12CDE"
     )
 
@@ -152,7 +199,9 @@ def test_history_detects_vehicle_in_garage(
     )
 
     vehicle_id = (
-        vehicle_response.json()["id"]
+        vehicle_response.json()[
+            "id"
+        ]
     )
 
     authenticated_client.post(
@@ -166,12 +215,19 @@ def test_history_detects_vehicle_in_garage(
         )
     )
 
-    item = response.json()[0]
-
-    assert item["in_garage"] is True
+    item = (
+        response.json()[0]
+    )
 
     assert (
-        item["garage_vehicle_id"]
+        item["in_garage"]
+        is True
+    )
+
+    assert (
+        item[
+            "garage_vehicle_id"
+        ]
         == vehicle_id
     )
 
@@ -187,7 +243,9 @@ def test_user_can_delete_history_item(
     )
 
     check_id = (
-        create_response.json()["id"]
+        create_response.json()[
+            "id"
+        ]
     )
 
     delete_response = (
@@ -239,7 +297,10 @@ def test_user_can_clear_history(
         )
     )
 
-    assert response.status_code == 204
+    assert (
+        response.status_code
+        == 204
+    )
 
     history_response = (
         authenticated_client.get(

@@ -2,8 +2,13 @@
 
 import {
   FormEvent,
+  useCallback,
+  useEffect,
+  useRef,
   useState,
 } from "react";
+
+import Link from "next/link";
 
 import {
   useRouter,
@@ -37,8 +42,38 @@ import {
   sortMotTests,
 } from "./utils";
 
+import styles from "./VehicleChecker.module.css";
 
-export default function VehicleChecker() {
+
+type ActivePage =
+  | "home"
+  | "checks"
+  | "vehicles";
+
+
+interface VehicleCheckerProps {
+  initialRegistration?: string;
+
+  autoCheck?: boolean;
+
+  activePage?: ActivePage;
+
+  resultOnly?: boolean;
+
+  backHref?: string;
+
+  backLabel?: string;
+}
+
+
+export default function VehicleChecker({
+  initialRegistration = "",
+  autoCheck = false,
+  activePage = "home",
+  resultOnly = false,
+  backHref,
+  backLabel,
+}: VehicleCheckerProps) {
   const router =
     useRouter();
 
@@ -46,10 +81,22 @@ export default function VehicleChecker() {
     user,
   } = useAuth();
 
+  const lastAutoCheck =
+    useRef<string | null>(
+      null,
+    );
+
   const [
     registration,
     setRegistration,
-  ] = useState("");
+  ] =
+    useState(
+      initialRegistration
+        ? formatRegistration(
+            initialRegistration,
+          )
+        : "",
+    );
 
   const [
     vehicle,
@@ -63,7 +110,12 @@ export default function VehicleChecker() {
     loading,
     setLoading,
   ] =
-    useState(false);
+    useState(
+      autoCheck
+      && Boolean(
+        initialRegistration,
+      ),
+    );
 
   const [
     addingToGarage,
@@ -88,62 +140,122 @@ export default function VehicleChecker() {
     );
 
 
+  const runVehicleCheck =
+    useCallback(
+      async (
+        registrationToCheck: string,
+      ) => {
+        if (
+          !registrationToCheck.trim()
+        ) {
+          setError(
+            "Enter a registration number first.",
+          );
+
+          return;
+        }
+
+        setLoading(true);
+        setError(null);
+        setNotice(null);
+        setVehicle(null);
+
+        try {
+          const result =
+            await checkVehicle(
+              registrationToCheck,
+            );
+
+          setVehicle(
+            result,
+          );
+
+          setRegistration(
+            formatRegistration(
+              result.registration,
+            ),
+          );
+
+        } catch (caughtError) {
+          if (
+            caughtError instanceof
+            ApiError
+          ) {
+            if (
+              caughtError.status ===
+              404
+            ) {
+              setError(
+                "We could not find a vehicle with that registration.",
+              );
+
+            } else {
+              setError(
+                caughtError.message,
+              );
+            }
+
+          } else {
+            setError(
+              "We could not connect to MyGarage. Check that the backend is running and try again.",
+            );
+          }
+
+        } finally {
+          setLoading(false);
+        }
+      },
+      [],
+    );
+
+
+  useEffect(() => {
+    const cleanRegistration =
+      initialRegistration
+        .replace(
+          /\s+/g,
+          "",
+        )
+        .toUpperCase();
+
+    if (
+      !autoCheck
+      || !cleanRegistration
+      || lastAutoCheck.current
+        === cleanRegistration
+    ) {
+      return;
+    }
+
+    lastAutoCheck.current =
+      cleanRegistration;
+
+    setRegistration(
+      formatRegistration(
+        cleanRegistration,
+      ),
+    );
+
+    void runVehicleCheck(
+      cleanRegistration,
+    );
+
+  }, [
+    autoCheck,
+    initialRegistration,
+    runVehicleCheck,
+  ]);
+
+
   async function handleSearch(
     event:
       FormEvent<HTMLFormElement>,
   ) {
     event.preventDefault();
 
-    if (!registration.trim()) {
-      setError(
-        "Enter a registration number first.",
-      );
-
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-    setNotice(null);
-    setVehicle(null);
-
-    try {
-      const result =
-        await checkVehicle(
-          registration,
-        );
-
-      setVehicle(result);
-
-      setRegistration(
-        formatRegistration(
-          result.registration,
-        ),
-      );
-    } catch (caughtError) {
-      if (
-        caughtError instanceof
-        ApiError
-      ) {
-        if (
-          caughtError.status === 404
-        ) {
-          setError(
-            "We could not find a vehicle with that registration.",
-          );
-        } else {
-          setError(
-            caughtError.message,
-          );
-        }
-      } else {
-        setError(
-          "We could not connect to MyGarage. Check that the backend is running and try again.",
-        );
-      }
-    } finally {
-      setLoading(false);
-    }
+    await runVehicleCheck(
+      registration,
+    );
   }
 
 
@@ -154,13 +266,15 @@ export default function VehicleChecker() {
 
     if (!user) {
       router.push(
-        "/login"
+        "/login",
       );
 
       return;
     }
 
-    if (vehicle.in_garage) {
+    if (
+      vehicle.in_garage
+    ) {
       return;
     }
 
@@ -176,7 +290,10 @@ export default function VehicleChecker() {
 
       setVehicle({
         ...vehicle,
-        in_garage: true,
+
+        in_garage:
+          true,
+
         garage_vehicle_id:
           result.vehicle.id,
       });
@@ -188,20 +305,25 @@ export default function VehicleChecker() {
             : "tests were"
         } newly saved.`,
       );
+
     } catch (caughtError) {
       if (
         caughtError instanceof
-          ApiError &&
-        caughtError.status === 409
+          ApiError
+        && caughtError.status
+          === 409
       ) {
         setVehicle({
           ...vehicle,
-          in_garage: true,
+
+          in_garage:
+            true,
         });
 
         setNotice(
           "This vehicle is already in My Vehicles.",
         );
+
       } else if (
         caughtError instanceof
         ApiError
@@ -209,13 +331,17 @@ export default function VehicleChecker() {
         setError(
           caughtError.message,
         );
+
       } else {
         setError(
           "We could not add the vehicle to My Vehicles. Please try again.",
         );
       }
+
     } finally {
-      setAddingToGarage(false);
+      setAddingToGarage(
+        false,
+      );
     }
   }
 
@@ -242,89 +368,133 @@ export default function VehicleChecker() {
       : null;
 
 
+  function renderBackLink() {
+    if (
+      !backHref
+      || !backLabel
+    ) {
+      return null;
+    }
+
+    return (
+      <div
+        className={
+          styles.backRow
+        }
+      >
+        <Link
+          className={
+            styles.backLink
+          }
+          href={
+            backHref
+          }
+        >
+          ← {backLabel}
+        </Link>
+      </div>
+    );
+  }
+
+
   return (
     <div className="site-shell">
       <SiteHeader
-        activePage="home"
+        activePage={
+          activePage
+        }
       />
 
       <main>
-        <section className="hero">
-          <div className="hero-inner">
-            <span className="hero-eyebrow">
-              UK vehicle history
-            </span>
+        {!resultOnly && (
+          <section className="hero">
+            <div className="hero-inner">
+              <span className="hero-eyebrow">
+                UK vehicle history
+              </span>
 
-            <h1>
-              Know what&apos;s happened
-              <br />
-              to a car before you rely on it.
-            </h1>
+              <h1>
+                Know what&apos;s happened
+                <br />
+                to a car before you rely on it.
+              </h1>
 
-            <p className="hero-copy">
-              Check MOT history, mileage and
-              recorded defects from one
-              registration number.
-            </p>
+              <p className="hero-copy">
+                Check MOT history, mileage and
+                recorded defects from one
+                registration number.
+              </p>
 
-            <form
-              className="registration-search"
-              onSubmit={handleSearch}
-            >
-              <div className="registration-field">
-                <span
-                  className="plate-strip"
-                  aria-hidden="true"
-                >
-                  UK
-                </span>
+              <form
+                className="registration-search"
+                onSubmit={
+                  handleSearch
+                }
+              >
+                <div className="registration-field">
+                  <span
+                    className="plate-strip"
+                    aria-hidden="true"
+                  >
+                    UK
+                  </span>
 
-                <input
-                  type="text"
-                  value={registration}
-                  onChange={(event) =>
-                    setRegistration(
-                      event.target.value
-                        .toUpperCase(),
-                    )
+                  <input
+                    type="text"
+                    value={
+                      registration
+                    }
+                    onChange={(
+                      event,
+                    ) =>
+                      setRegistration(
+                        event.target.value
+                          .toUpperCase(),
+                      )
+                    }
+                    placeholder="ENTER REG"
+                    maxLength={9}
+                    autoComplete="off"
+                    spellCheck={
+                      false
+                    }
+                    aria-label="Vehicle registration"
+                  />
+                </div>
+
+                <button
+                  className="primary-button search-button"
+                  type="submit"
+                  disabled={
+                    loading
                   }
-                  placeholder="ENTER REG"
-                  maxLength={9}
-                  autoComplete="off"
-                  spellCheck={false}
-                  aria-label="Vehicle registration"
-                />
-              </div>
+                >
+                  {loading
+                    ? "Checking..."
+                    : "Check vehicle"}
+                </button>
+              </form>
 
-              <button
-                className="primary-button search-button"
-                type="submit"
-                disabled={loading}
-              >
-                {loading
-                  ? "Checking..."
-                  : "Check vehicle"}
-              </button>
-            </form>
+              <p className="search-note">
+                Checking a vehicle does not add
+                it to My Vehicles.
+              </p>
 
-            <p className="search-note">
-              Checking a vehicle does not add
-              it to My Vehicles.
-            </p>
+              {error && (
+                <div
+                  className="message error-message"
+                  role="alert"
+                >
+                  {error}
+                </div>
+              )}
+            </div>
+          </section>
+        )}
 
-            {error && (
-              <div
-                className="message error-message"
-                role="alert"
-              >
-                {error}
-              </div>
-            )}
-          </div>
-        </section>
-
-        {!vehicle &&
-          !loading && (
+        {!resultOnly
+          && !vehicle
+          && !loading && (
             <section className="features">
               <div className="features-inner">
                 <div className="feature-card">
@@ -381,6 +551,9 @@ export default function VehicleChecker() {
         {loading && (
           <section className="results">
             <div className="results-inner">
+              {resultOnly
+                && renderBackLink()}
+
               <div className="loading-panel">
                 <div className="loader" />
 
@@ -399,11 +572,32 @@ export default function VehicleChecker() {
           </section>
         )}
 
-        {vehicle &&
-          motStatus &&
-          mileage && (
+        {resultOnly
+          && !loading
+          && !vehicle
+          && error && (
             <section className="results">
               <div className="results-inner">
+                {renderBackLink()}
+
+                <div
+                  className={`message error-message ${styles.resultError}`}
+                  role="alert"
+                >
+                  {error}
+                </div>
+              </div>
+            </section>
+          )}
+
+        {vehicle
+          && motStatus
+          && mileage && (
+            <section className="results">
+              <div className="results-inner">
+                {resultOnly
+                  && renderBackLink()}
+
                 <div className="vehicle-header">
                   <div>
                     <div className="number-plate">
@@ -456,8 +650,8 @@ export default function VehicleChecker() {
                       }
                       type="button"
                       disabled={
-                        vehicle.in_garage ||
-                        addingToGarage
+                        vehicle.in_garage
+                        || addingToGarage
                       }
                       onClick={
                         handleAddToGarage
@@ -524,6 +718,7 @@ export default function VehicleChecker() {
                           )}
                         </span>
                       </div>
+
                     ) : (
                       <span className="stat-detail">
                         No expiry available
@@ -583,14 +778,14 @@ export default function VehicleChecker() {
                       <span
                         className={
                           latestMot.test_result
-                            ?.toUpperCase() ===
-                          "PASSED"
+                            ?.toUpperCase()
+                          === "PASSED"
                             ? "result-badge passed"
                             : "result-badge failed"
                         }
                       >
-                        {latestMot.test_result ??
-                          "Unknown"}
+                        {latestMot.test_result
+                          ?? "Unknown"}
                       </span>
                     </div>
 
@@ -647,9 +842,9 @@ export default function VehicleChecker() {
 
                 <p className="data-note">
                   MOT information is retrieved
-                  from DVSA records. A vehicle
-                  check is only saved when you
-                  choose to add it to My Vehicles.
+                  from DVSA records. Checking
+                  a vehicle does not add it to
+                  My Vehicles.
                 </p>
               </div>
             </section>

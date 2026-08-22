@@ -103,9 +103,9 @@ def history_item_to_read(
         last_checked_at=(
             item.last_checked_at
         ),
-        check_count=item.check_count,
         in_garage=(
-            garage_vehicle_id is not None
+            garage_vehicle_id
+            is not None
         ),
         garage_vehicle_id=(
             garage_vehicle_id
@@ -125,7 +125,7 @@ def save_vehicle_check_history(
     db: DbSession,
     current_user: OptionalUser,
 ) -> VehicleCheckHistoryRead | None:
-    # Anonymous lookups remain completely read-only.
+    # Anonymous checks remain read-only.
     if current_user is None:
         return None
 
@@ -152,7 +152,9 @@ def save_vehicle_check_history(
             ),
             make=payload.make,
             model=payload.model,
-            fuel_type=payload.fuel_type,
+            fuel_type=(
+                payload.fuel_type
+            ),
             colour=payload.colour,
             year=payload.year,
             first_checked_at=now,
@@ -170,11 +172,12 @@ def save_vehicle_check_history(
         item.fuel_type = (
             payload.fuel_type
         )
-        item.colour = payload.colour
+        item.colour = (
+            payload.colour
+        )
         item.year = payload.year
 
         item.last_checked_at = now
-        item.check_count += 1
 
     db.commit()
     db.refresh(item)
@@ -256,7 +259,9 @@ def list_vehicle_check_history(
             ),
             make=item.make,
             model=item.model,
-            fuel_type=item.fuel_type,
+            fuel_type=(
+                item.fuel_type
+            ),
             colour=item.colour,
             year=item.year,
             first_checked_at=(
@@ -264,9 +269,6 @@ def list_vehicle_check_history(
             ),
             last_checked_at=(
                 item.last_checked_at
-            ),
-            check_count=(
-                item.check_count
             ),
             in_garage=(
                 item.registration
@@ -284,7 +286,9 @@ def list_vehicle_check_history(
 
 @router.delete(
     "/history/{check_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
+    status_code=(
+        status.HTTP_204_NO_CONTENT
+    ),
 )
 def delete_vehicle_check_history_item(
     check_id: int,
@@ -322,7 +326,9 @@ def delete_vehicle_check_history_item(
 
 @router.delete(
     "/history",
-    status_code=status.HTTP_204_NO_CONTENT,
+    status_code=(
+        status.HTTP_204_NO_CONTENT
+    ),
 )
 def clear_vehicle_check_history(
     db: DbSession,

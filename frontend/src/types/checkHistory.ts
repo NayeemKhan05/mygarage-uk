@@ -13,8 +13,6 @@ export interface VehicleCheckHistoryItem {
   first_checked_at: string;
   last_checked_at: string;
 
-  check_count: number;
-
   in_garage: boolean;
   garage_vehicle_id: number | null;
 }

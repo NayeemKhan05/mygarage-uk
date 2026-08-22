@@ -22,7 +22,6 @@ import {
 import {
   ApiError,
   addVehicleToGarage,
-  checkVehicle,
   clearVehicleCheckHistory,
   deleteVehicleCheckHistoryItem,
   getVehicleCheckHistory,
@@ -107,15 +106,6 @@ function vehicleMeta(
 }
 
 
-function checkCountLabel(
-  count: number,
-): string {
-  return count === 1
-    ? "1"
-    : count.toString();
-}
-
-
 export default function ChecksDashboard() {
   const router =
     useRouter();
@@ -146,14 +136,6 @@ export default function ChecksDashboard() {
     setLoading,
   ] =
     useState(true);
-
-  const [
-    checkingId,
-    setCheckingId,
-  ] =
-    useState<
-      number | null
-    >(null);
 
   const [
     addingId,
@@ -297,55 +279,18 @@ export default function ChecksDashboard() {
     );
 
 
-  async function handleCheckAgain(
+  function handleCheckAgain(
     item:
       VehicleCheckHistoryItem,
   ) {
-    setCheckingId(
-      item.id,
+    router.push(
+      (
+        "/checks/"
+        + encodeURIComponent(
+          item.registration,
+        )
+      ),
     );
-
-    setError(null);
-    setNotice(null);
-
-    try {
-      await checkVehicle(
-        item.registration,
-      );
-
-      await loadChecks();
-
-      setNotice(
-        (
-          `${formatRegistration(
-            item.registration,
-          )} was checked against `
-          + "the latest DVSA data."
-        ),
-      );
-
-    } catch (
-      caughtError
-    ) {
-      if (
-        caughtError
-        instanceof ApiError
-      ) {
-        setError(
-          caughtError.message,
-        );
-
-      } else {
-        setError(
-          "We could not check this vehicle.",
-        );
-      }
-
-    } finally {
-      setCheckingId(
-        null,
-      );
-    }
   }
 
 
@@ -768,10 +713,6 @@ export default function ChecksDashboard() {
                 </span>
 
                 <span>
-                  Checks
-                </span>
-
-                <span>
                   Status
                 </span>
 
@@ -883,30 +824,6 @@ export default function ChecksDashboard() {
 
                         <div
                           className={
-                            styles.countCell
-                          }
-                        >
-                          <span
-                            className={
-                              styles.mobileLabel
-                            }
-                          >
-                            Checks
-                          </span>
-
-                          <span
-                            className={
-                              styles.countBadge
-                            }
-                          >
-                            {checkCountLabel(
-                              item.check_count,
-                            )}
-                          </span>
-                        </div>
-
-                        <div
-                          className={
                             styles.statusCell
                           }
                         >
@@ -954,20 +871,13 @@ export default function ChecksDashboard() {
                                 styles.textButton
                               }
                               type="button"
-                              disabled={
-                                checkingId
-                                === item.id
-                              }
                               onClick={() =>
                                 handleCheckAgain(
                                   item,
                                 )
                               }
                             >
-                              {checkingId
-                                === item.id
-                                ? "Checking..."
-                                : "Check again"}
+                              Check again
                             </button>
 
                             {item.in_garage
