@@ -13,6 +13,13 @@ import type {
 } from "../types/maintenance";
 
 import type {
+  Reminder,
+  ReminderSettings,
+  ReminderSettingsPayload,
+  ReminderSummary,
+} from "../types/reminder";
+
+import type {
   ServiceReceipt,
   ServiceRecord,
   ServiceRecordPayload,
@@ -62,14 +69,13 @@ async function apiRequest<T>(
     );
 
   /*
-   * FormData needs to set its own multipart
-   * boundary, so JSON headers are only added
-   * to normal API requests.
+   * FormData sets its own multipart boundary,
+   * so only add JSON headers to normal requests.
    */
   if (
     !(options.body instanceof FormData)
     && !headers.has(
-      "Content-Type"
+      "Content-Type",
     )
   ) {
     headers.set(
@@ -78,26 +84,27 @@ async function apiRequest<T>(
     );
   }
 
-  const response = await fetch(
-    `${API_BASE_URL}${path}`,
-    {
-      ...options,
+  const response =
+    await fetch(
+      `${API_BASE_URL}${path}`,
+      {
+        ...options,
 
-      credentials: "include",
+        credentials:
+          "include",
 
-      headers,
-    },
-  );
+        headers,
+      },
+    );
 
   if (!response.ok) {
     let message =
       "Something went wrong";
 
     try {
-      const body =
-        (
-          await response.json()
-        ) as ApiErrorResponse;
+      const body:
+        ApiErrorResponse =
+          await response.json();
 
       if (body.detail) {
         message =
@@ -120,9 +127,10 @@ async function apiRequest<T>(
     return undefined as T;
   }
 
-  return (
-    response.json() as Promise<T>
-  );
+  const data: T =
+    await response.json();
+
+  return data;
 }
 
 
@@ -136,12 +144,14 @@ export function registerUser(
   return apiRequest<User>(
     "/auth/register",
     {
-      method: "POST",
+      method:
+        "POST",
 
-      body: JSON.stringify({
-        email,
-        password,
-      }),
+      body:
+        JSON.stringify({
+          email,
+          password,
+        }),
     },
   );
 }
@@ -154,12 +164,14 @@ export function loginUser(
   return apiRequest<User>(
     "/auth/login",
     {
-      method: "POST",
+      method:
+        "POST",
 
-      body: JSON.stringify({
-        email,
-        password,
-      }),
+      body:
+        JSON.stringify({
+          email,
+          password,
+        }),
     },
   );
 }
@@ -170,7 +182,8 @@ export function logoutUser():
   return apiRequest<void>(
     "/auth/logout",
     {
-      method: "POST",
+      method:
+        "POST",
     },
   );
 }
@@ -194,19 +207,19 @@ export async function checkVehicle(
     await apiRequest<VehicleCheckResponse>(
       "/vehicle-checks",
       {
-        method: "POST",
+        method:
+          "POST",
 
-        body: JSON.stringify({
-          registration,
-        }),
+        body:
+          JSON.stringify({
+            registration,
+          }),
       },
     );
 
   /*
-   * Check history is deliberately separate from
-   * the DVSA lookup. Anonymous users get no
-   * persisted history and a history failure should
-   * not break a successful vehicle check.
+   * Check history must never prevent a
+   * successful live DVSA lookup.
    */
   try {
     await saveVehicleCheckHistory({
@@ -214,23 +227,28 @@ export async function checkVehicle(
         result.registration,
 
       make:
-        result.make ?? null,
+        result.make
+        ?? null,
 
       model:
-        result.model ?? null,
+        result.model
+        ?? null,
 
       fuel_type:
-        result.fuel_type ?? null,
+        result.fuel_type
+        ?? null,
 
       colour:
-        result.colour ?? null,
+        result.colour
+        ?? null,
 
       year:
-        result.year ?? null,
+        result.year
+        ?? null,
     });
 
   } catch {
-    // The live vehicle result should still be usable.
+    // The live result remains usable.
   }
 
   return result;
@@ -241,27 +259,34 @@ export async function checkVehicle(
 
 
 export function saveVehicleCheckHistory(
-  payload: VehicleCheckHistoryPayload,
+  payload:
+    VehicleCheckHistoryPayload,
 ): Promise<
-  VehicleCheckHistoryItem | null
+  VehicleCheckHistoryItem
+  | null
 > {
   return apiRequest<
-    VehicleCheckHistoryItem | null
+    VehicleCheckHistoryItem
+    | null
   >(
     "/vehicle-checks/history",
     {
-      method: "POST",
+      method:
+        "POST",
 
-      body: JSON.stringify(
-        payload,
-      ),
+      body:
+        JSON.stringify(
+          payload,
+        ),
     },
   );
 }
 
 
 export function getVehicleCheckHistory():
-  Promise<VehicleCheckHistoryItem[]> {
+  Promise<
+    VehicleCheckHistoryItem[]
+  > {
   return apiRequest<
     VehicleCheckHistoryItem[]
   >(
@@ -279,7 +304,8 @@ export function deleteVehicleCheckHistoryItem(
       + checkId
     ),
     {
-      method: "DELETE",
+      method:
+        "DELETE",
     },
   );
 }
@@ -290,7 +316,8 @@ export function clearVehicleCheckHistory():
   return apiRequest<void>(
     "/vehicle-checks/history",
     {
-      method: "DELETE",
+      method:
+        "DELETE",
     },
   );
 }
@@ -305,11 +332,13 @@ export function addVehicleToGarage(
   return apiRequest<VehicleImportResponse>(
     "/vehicles/import",
     {
-      method: "POST",
+      method:
+        "POST",
 
-      body: JSON.stringify({
-        registration,
-      }),
+      body:
+        JSON.stringify({
+          registration,
+        }),
     },
   );
 }
@@ -317,7 +346,9 @@ export function addVehicleToGarage(
 
 export function getGarageVehicles():
   Promise<GarageVehicle[]> {
-  return apiRequest<GarageVehicle[]>(
+  return apiRequest<
+    GarageVehicle[]
+  >(
     "/vehicles",
   );
 }
@@ -336,18 +367,29 @@ export function getVehicleMotHistory(
   vehicleId: number,
 ): Promise<MotTest[]> {
   return apiRequest<MotTest[]>(
-    `/vehicles/${vehicleId}/mot-history`,
+    (
+      `/vehicles/${vehicleId}`
+      + "/mot-history"
+    ),
   );
 }
 
 
 export function refreshVehicleMotHistory(
   vehicleId: number,
-): Promise<MotHistoryRefreshResponse> {
-  return apiRequest<MotHistoryRefreshResponse>(
-    `/vehicles/${vehicleId}/mot-history/refresh`,
+): Promise<
+  MotHistoryRefreshResponse
+> {
+  return apiRequest<
+    MotHistoryRefreshResponse
+  >(
+    (
+      `/vehicles/${vehicleId}`
+      + "/mot-history/refresh"
+    ),
     {
-      method: "POST",
+      method:
+        "POST",
     },
   );
 }
@@ -359,7 +401,8 @@ export function deleteGarageVehicle(
   return apiRequest<void>(
     `/vehicles/${vehicleId}`,
     {
-      method: "DELETE",
+      method:
+        "DELETE",
     },
   );
 }
@@ -371,24 +414,35 @@ export function deleteGarageVehicle(
 export function getServiceRecords(
   vehicleId: number,
 ): Promise<ServiceRecord[]> {
-  return apiRequest<ServiceRecord[]>(
-    `/vehicles/${vehicleId}/service-records`,
+  return apiRequest<
+    ServiceRecord[]
+  >(
+    (
+      `/vehicles/${vehicleId}`
+      + "/service-records"
+    ),
   );
 }
 
 
 export function createServiceRecord(
   vehicleId: number,
-  payload: ServiceRecordPayload,
+  payload:
+    ServiceRecordPayload,
 ): Promise<ServiceRecord> {
   return apiRequest<ServiceRecord>(
-    `/vehicles/${vehicleId}/service-records`,
+    (
+      `/vehicles/${vehicleId}`
+      + "/service-records"
+    ),
     {
-      method: "POST",
+      method:
+        "POST",
 
-      body: JSON.stringify(
-        payload,
-      ),
+      body:
+        JSON.stringify(
+          payload,
+        ),
     },
   );
 }
@@ -397,19 +451,25 @@ export function createServiceRecord(
 export function updateServiceRecord(
   vehicleId: number,
   recordId: number,
-  payload: Partial<ServiceRecordPayload>,
+  payload:
+    Partial<
+      ServiceRecordPayload
+    >,
 ): Promise<ServiceRecord> {
   return apiRequest<ServiceRecord>(
     (
-      `/vehicles/${vehicleId}/service-records/`
+      `/vehicles/${vehicleId}`
+      + "/service-records/"
       + recordId
     ),
     {
-      method: "PUT",
+      method:
+        "PUT",
 
-      body: JSON.stringify(
-        payload,
-      ),
+      body:
+        JSON.stringify(
+          payload,
+        ),
     },
   );
 }
@@ -421,11 +481,13 @@ export function deleteServiceRecord(
 ): Promise<void> {
   return apiRequest<void>(
     (
-      `/vehicles/${vehicleId}/service-records/`
+      `/vehicles/${vehicleId}`
+      + "/service-records/"
       + recordId
     ),
     {
-      method: "DELETE",
+      method:
+        "DELETE",
     },
   );
 }
@@ -444,14 +506,20 @@ export function uploadServiceReceipt(
     file,
   );
 
-  return apiRequest<ServiceReceipt>(
+  return apiRequest<
+    ServiceReceipt
+  >(
     (
-      `/vehicles/${vehicleId}/service-records/`
+      `/vehicles/${vehicleId}`
+      + "/service-records/"
       + `${recordId}/receipts`
     ),
     {
-      method: "POST",
-      body: formData,
+      method:
+        "POST",
+
+      body:
+        formData,
     },
   );
 }
@@ -464,11 +532,14 @@ export function deleteServiceReceipt(
 ): Promise<void> {
   return apiRequest<void>(
     (
-      `/vehicles/${vehicleId}/service-records/`
-      + `${recordId}/receipts/${receiptId}`
+      `/vehicles/${vehicleId}`
+      + "/service-records/"
+      + `${recordId}/receipts/`
+      + receiptId
     ),
     {
-      method: "DELETE",
+      method:
+        "DELETE",
     },
   );
 }
@@ -480,7 +551,8 @@ export function getServiceReceiptUrl(
   receiptId: number,
 ): string {
   return (
-    `${API_BASE_URL}/vehicles/${vehicleId}`
+    `${API_BASE_URL}`
+    + `/vehicles/${vehicleId}`
     + `/service-records/${recordId}`
     + `/receipts/${receiptId}/file`
   );
@@ -492,25 +564,40 @@ export function getServiceReceiptUrl(
 
 export function getMaintenanceItems(
   vehicleId: number,
-): Promise<MaintenanceItem[]> {
-  return apiRequest<MaintenanceItem[]>(
-    `/vehicles/${vehicleId}/maintenance`,
+): Promise<
+  MaintenanceItem[]
+> {
+  return apiRequest<
+    MaintenanceItem[]
+  >(
+    (
+      `/vehicles/${vehicleId}`
+      + "/maintenance"
+    ),
   );
 }
 
 
 export function createMaintenanceItem(
   vehicleId: number,
-  payload: MaintenanceItemPayload,
+  payload:
+    MaintenanceItemPayload,
 ): Promise<MaintenanceItem> {
-  return apiRequest<MaintenanceItem>(
-    `/vehicles/${vehicleId}/maintenance`,
+  return apiRequest<
+    MaintenanceItem
+  >(
+    (
+      `/vehicles/${vehicleId}`
+      + "/maintenance"
+    ),
     {
-      method: "POST",
+      method:
+        "POST",
 
-      body: JSON.stringify(
-        payload,
-      ),
+      body:
+        JSON.stringify(
+          payload,
+        ),
     },
   );
 }
@@ -519,19 +606,27 @@ export function createMaintenanceItem(
 export function updateMaintenanceItem(
   vehicleId: number,
   itemId: number,
-  payload: Partial<MaintenanceItemPayload>,
+  payload:
+    Partial<
+      MaintenanceItemPayload
+    >,
 ): Promise<MaintenanceItem> {
-  return apiRequest<MaintenanceItem>(
+  return apiRequest<
+    MaintenanceItem
+  >(
     (
-      `/vehicles/${vehicleId}/maintenance/`
+      `/vehicles/${vehicleId}`
+      + "/maintenance/"
       + itemId
     ),
     {
-      method: "PUT",
+      method:
+        "PUT",
 
-      body: JSON.stringify(
-        payload,
-      ),
+      body:
+        JSON.stringify(
+          payload,
+        ),
     },
   );
 }
@@ -543,11 +638,98 @@ export function deleteMaintenanceItem(
 ): Promise<void> {
   return apiRequest<void>(
     (
-      `/vehicles/${vehicleId}/maintenance/`
+      `/vehicles/${vehicleId}`
+      + "/maintenance/"
       + itemId
     ),
     {
-      method: "DELETE",
+      method:
+        "DELETE",
+    },
+  );
+}
+
+
+/* Reminders */
+
+
+export function getReminders():
+  Promise<Reminder[]> {
+  return apiRequest<
+    Reminder[]
+  >(
+    "/reminders",
+  );
+}
+
+
+export function getReminderSummary():
+  Promise<ReminderSummary> {
+  return apiRequest<
+    ReminderSummary
+  >(
+    "/reminders/summary",
+  );
+}
+
+
+export function getReminderSettings():
+  Promise<ReminderSettings> {
+  return apiRequest<
+    ReminderSettings
+  >(
+    "/reminders/settings",
+  );
+}
+
+
+export function updateReminderSettings(
+  payload:
+    ReminderSettingsPayload,
+): Promise<ReminderSettings> {
+  return apiRequest<
+    ReminderSettings
+  >(
+    "/reminders/settings",
+    {
+      method:
+        "PUT",
+
+      body:
+        JSON.stringify(
+          payload,
+        ),
+    },
+  );
+}
+
+
+export function dismissReminder(
+  reminderKey: string,
+): Promise<void> {
+  return apiRequest<void>(
+    "/reminders/dismiss",
+    {
+      method:
+        "POST",
+
+      body:
+        JSON.stringify({
+          reminder_key:
+            reminderKey,
+        }),
+    },
+  );
+}
+
+
+export function restoreDismissedReminders():
+  Promise<void> {
+  return apiRequest<void>(
+    "/reminders/dismissals",
+    {
+      method:
+        "DELETE",
     },
   );
 }

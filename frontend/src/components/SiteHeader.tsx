@@ -16,31 +16,13 @@ import styles from "./SiteHeader.module.css";
 type ActivePage =
   | "home"
   | "checks"
-  | "vehicles";
+  | "vehicles"
+  | "reminders";
 
 
 interface SiteHeaderProps {
-  activePage: ActivePage;
+  activePage?: ActivePage;
 }
-
-
-const navigation = [
-  {
-    label: "Home",
-    href: "/",
-    page: "home",
-  },
-  {
-    label: "My Checks",
-    href: "/checks",
-    page: "checks",
-  },
-  {
-    label: "My Vehicles",
-    href: "/vehicles",
-    page: "vehicles",
-  },
-] as const;
 
 
 export default function SiteHeader({
@@ -51,15 +33,29 @@ export default function SiteHeader({
 
   const {
     user,
-    loading,
     logout,
-  } = useAuth();
+  } =
+    useAuth();
+
+
+  function navClass(
+    page: ActivePage,
+  ): string {
+    return (
+      activePage === page
+        ? "nav-link active"
+        : "nav-link"
+    );
+  }
 
 
   async function handleLogout() {
     await logout();
 
-    router.push("/");
+    router.push(
+      "/",
+    );
+
     router.refresh();
   }
 
@@ -76,61 +72,104 @@ export default function SiteHeader({
           </span>
 
           <span>
-            MyGarage
-            <strong> UK</strong>
+            MyGarage UK
           </span>
         </Link>
 
-        <div className={styles.rightSide}>
+        <div
+          className={
+            styles.rightSide
+          }
+        >
           <nav
             className="site-nav"
             aria-label="Main navigation"
           >
-            {navigation.map(
-              (item) => (
-                <Link
-                  key={item.page}
-                  href={item.href}
-                  className={
-                    activePage ===
-                    item.page
-                      ? "nav-link active"
-                      : "nav-link"
-                  }
-                >
-                  {item.label}
-                </Link>
-              ),
-            )}
+            <Link
+              className={
+                navClass(
+                  "home",
+                )
+              }
+              href="/"
+            >
+              Home
+            </Link>
+
+            <Link
+              className={
+                navClass(
+                  "checks",
+                )
+              }
+              href="/checks"
+            >
+              My Checks
+            </Link>
+
+            <Link
+              className={
+                navClass(
+                  "vehicles",
+                )
+              }
+              href="/vehicles"
+            >
+              My Vehicles
+            </Link>
+
+            <Link
+              className={
+                navClass(
+                  "reminders",
+                )
+              }
+              href="/reminders"
+            >
+              Reminders
+            </Link>
           </nav>
 
-          <div className={styles.authArea}>
-            {!loading && !user && (
-              <Link
-                href="/login"
-                className={styles.signInLink}
-              >
-                Sign in
-              </Link>
-            )}
-
-            {!loading && user && (
+          <div
+            className={
+              styles.authArea
+            }
+          >
+            {user ? (
               <>
                 <span
-                  className={styles.userEmail}
-                  title={user.email}
+                  className={
+                    styles.userEmail
+                  }
+                  title={
+                    user.email
+                  }
                 >
                   {user.email}
                 </span>
 
                 <button
+                  className={
+                    styles.logoutButton
+                  }
                   type="button"
-                  className={styles.logoutButton}
-                  onClick={handleLogout}
+                  onClick={
+                    handleLogout
+                  }
                 >
                   Log out
                 </button>
               </>
+
+            ) : (
+              <Link
+                className={
+                  styles.signInLink
+                }
+                href="/login"
+              >
+                Sign in
+              </Link>
             )}
           </div>
         </div>

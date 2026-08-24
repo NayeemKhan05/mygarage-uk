@@ -1,0 +1,837 @@
+.page {
+  min-height:
+    calc(100vh - 76px);
+
+  background:
+    var(--background);
+}
+
+
+.inner {
+  width:
+    min(
+      1080px,
+      calc(100% - 40px)
+    );
+
+  margin:
+    0 auto;
+
+  padding:
+    46px 0 72px;
+}
+
+
+.heading {
+  margin-bottom:
+    24px;
+}
+
+
+.eyebrow {
+  display:
+    block;
+
+  margin-bottom:
+    6px;
+
+  color:
+    #788077;
+
+  font-size:
+    10px;
+
+  font-weight:
+    750;
+
+  letter-spacing:
+    0.12em;
+
+  text-transform:
+    uppercase;
+}
+
+
+.heading h1 {
+  margin:
+    0;
+
+  font-size:
+    clamp(
+      31px,
+      4vw,
+      42px
+    );
+
+  font-weight:
+    650;
+
+  letter-spacing:
+    -0.045em;
+}
+
+
+.heading p {
+  max-width:
+    620px;
+
+  margin:
+    9px 0 0;
+
+  color:
+    var(--muted);
+
+  font-size:
+    13px;
+
+  line-height:
+    1.55;
+}
+
+
+.summaryGrid {
+  margin-bottom:
+    18px;
+
+  display:
+    grid;
+
+  grid-template-columns:
+    repeat(
+      3,
+      minmax(0, 1fr)
+    );
+
+  gap:
+    10px;
+}
+
+
+.summaryCard {
+  padding:
+    18px;
+
+  border:
+    1px solid
+    var(--border);
+
+  border-radius:
+    13px;
+
+  background:
+    var(--surface);
+}
+
+
+.summaryCard span,
+.summaryCard strong {
+  display:
+    block;
+}
+
+
+.summaryCard span {
+  color:
+    var(--muted);
+
+  font-size:
+    9px;
+
+  font-weight:
+    750;
+
+  letter-spacing:
+    0.05em;
+
+  text-transform:
+    uppercase;
+}
+
+
+.summaryCard strong {
+  margin-top:
+    8px;
+
+  font-size:
+    27px;
+
+  font-weight:
+    650;
+}
+
+
+.urgentNumber {
+  color:
+    var(--red);
+}
+
+
+.warningNumber {
+  color:
+    var(--orange);
+}
+
+
+.panel {
+  margin-bottom:
+    18px;
+
+  border:
+    1px solid
+    var(--border);
+
+  border-radius:
+    14px;
+
+  background:
+    var(--surface);
+
+  overflow:
+    hidden;
+}
+
+
+.panelHeader {
+  padding:
+    16px 18px;
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    space-between;
+
+  gap:
+    16px;
+
+  border-bottom:
+    1px solid
+    var(--border);
+}
+
+
+.panelHeader h2 {
+  margin:
+    0;
+
+  font-size:
+    16px;
+}
+
+
+.panelHeader p {
+  margin:
+    5px 0 0;
+
+  color:
+    var(--muted);
+
+  font-size:
+    10px;
+}
+
+
+.settingsGrid {
+  padding:
+    18px;
+
+  display:
+    grid;
+
+  grid-template-columns:
+    repeat(
+      2,
+      minmax(0, 1fr)
+    );
+
+  gap:
+    15px;
+}
+
+
+.toggleRow {
+  min-height:
+    49px;
+
+  padding:
+    11px 12px;
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    space-between;
+
+  gap:
+    12px;
+
+  border:
+    1px solid
+    #e3e6e1;
+
+  border-radius:
+    9px;
+
+  background:
+    var(--surface-soft);
+}
+
+
+.toggleText strong,
+.toggleText span {
+  display:
+    block;
+}
+
+
+.toggleText strong {
+  font-size:
+    11px;
+}
+
+
+.toggleText span {
+  margin-top:
+    3px;
+
+  color:
+    var(--muted);
+
+  font-size:
+    9px;
+}
+
+
+.toggleRow input {
+  width:
+    18px;
+
+  height:
+    18px;
+
+  accent-color:
+    var(--green);
+}
+
+
+.field {
+  display:
+    flex;
+
+  flex-direction:
+    column;
+
+  gap:
+    6px;
+}
+
+
+.field span {
+  color:
+    var(--muted);
+
+  font-size:
+    10px;
+
+  font-weight:
+    700;
+}
+
+
+.field input {
+  min-height:
+    42px;
+
+  padding:
+    0 11px;
+
+  border:
+    1px solid
+    #cfd4ce;
+
+  border-radius:
+    8px;
+
+  outline:
+    0;
+
+  background:
+    white;
+
+  font:
+    inherit;
+
+  font-size:
+    12px;
+}
+
+
+.field input:focus {
+  border-color:
+    var(--green);
+
+  box-shadow:
+    0 0 0 3px
+    rgba(
+      23,
+      63,
+      44,
+      0.08
+    );
+}
+
+
+.settingsActions {
+  padding:
+    0 18px 18px;
+
+  display:
+    flex;
+
+  justify-content:
+    flex-end;
+
+  gap:
+    8px;
+}
+
+
+.secondaryButton,
+.primaryButton,
+.dismissButton {
+  min-height:
+    36px;
+
+  padding:
+    0 11px;
+
+  border-radius:
+    8px;
+
+  font-size:
+    10px;
+
+  font-weight:
+    700;
+
+  cursor:
+    pointer;
+}
+
+
+.primaryButton {
+  border:
+    1px solid
+    var(--green);
+
+  background:
+    var(--green);
+
+  color:
+    white;
+}
+
+
+.secondaryButton {
+  border:
+    1px solid
+    #d1d5cf;
+
+  background:
+    white;
+
+  color:
+    var(--green);
+}
+
+
+.dismissButton {
+  border:
+    1px solid
+    #d9ddd7;
+
+  background:
+    white;
+
+  color:
+    var(--muted);
+}
+
+
+.primaryButton:disabled,
+.secondaryButton:disabled,
+.dismissButton:disabled {
+  cursor:
+    not-allowed;
+
+  opacity:
+    0.55;
+}
+
+
+.notice,
+.error {
+  margin-bottom:
+    16px;
+
+  padding:
+    11px 13px;
+
+  border-radius:
+    9px;
+
+  font-size:
+    12px;
+}
+
+
+.notice {
+  border:
+    1px solid
+    #c7ddce;
+
+  background:
+    var(--green-light);
+
+  color:
+    var(--green);
+}
+
+
+.error {
+  border:
+    1px solid
+    #e4c2c0;
+
+  background:
+    var(--red-light);
+
+  color:
+    #842d2d;
+}
+
+
+.loading,
+.empty {
+  padding:
+    44px 24px;
+
+  border:
+    1px solid
+    var(--border);
+
+  border-radius:
+    14px;
+
+  background:
+    var(--surface);
+
+  text-align:
+    center;
+
+  color:
+    var(--muted);
+
+  font-size:
+    12px;
+}
+
+
+.empty strong {
+  display:
+    block;
+
+  margin-bottom:
+    6px;
+
+  color:
+    var(--green);
+
+  font-size:
+    17px;
+}
+
+
+.list {
+  display:
+    flex;
+
+  flex-direction:
+    column;
+
+  gap:
+    9px;
+}
+
+
+.reminder {
+  position:
+    relative;
+
+  padding:
+    16px 18px 16px 22px;
+
+  display:
+    grid;
+
+  grid-template-columns:
+    120px
+    minmax(0, 1fr)
+    auto;
+
+  align-items:
+    center;
+
+  gap:
+    16px;
+
+  border:
+    1px solid
+    var(--border);
+
+  border-radius:
+    12px;
+
+  background:
+    var(--surface);
+
+  overflow:
+    hidden;
+}
+
+
+.reminder::before {
+  content:
+    "";
+
+  position:
+    absolute;
+
+  inset:
+    0 auto 0 0;
+
+  width:
+    4px;
+
+  background:
+    var(--orange);
+}
+
+
+.reminder.urgent::before {
+  background:
+    var(--red);
+}
+
+
+.numberPlate {
+  width:
+    fit-content;
+
+  min-width:
+    92px;
+
+  min-height:
+    36px;
+
+  padding:
+    6px 10px;
+
+  display:
+    inline-flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  border:
+    2px solid
+    var(--plate-border);
+
+  border-radius:
+    7px;
+
+  background:
+    var(--plate-yellow);
+
+  color:
+    #111;
+
+  font-family:
+    var(--plate-font);
+
+  font-size:
+    17px;
+
+  font-weight:
+    400;
+
+  letter-spacing:
+    0.055em;
+
+  white-space:
+    nowrap;
+}
+
+
+.content {
+  min-width:
+    0;
+}
+
+
+.topLine {
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  flex-wrap:
+    wrap;
+
+  gap:
+    7px;
+}
+
+
+.topLine h3 {
+  margin:
+    0;
+
+  font-size:
+    13px;
+}
+
+
+.badge {
+  padding:
+    4px 7px;
+
+  border-radius:
+    999px;
+
+  font-size:
+    8px;
+
+  font-weight:
+    800;
+
+  letter-spacing:
+    0.04em;
+
+  text-transform:
+    uppercase;
+}
+
+
+.badge.urgent {
+  background:
+    var(--red-light);
+
+  color:
+    var(--red);
+}
+
+
+.badge.warning {
+  background:
+    var(--orange-light);
+
+  color:
+    var(--orange);
+}
+
+
+.message {
+  margin:
+    6px 0 0;
+
+  color:
+    #4f554e;
+
+  font-size:
+    11px;
+
+  line-height:
+    1.45;
+}
+
+
+.vehicleName {
+  margin-top:
+    5px;
+
+  color:
+    var(--muted);
+
+  font-size:
+    9px;
+}
+
+
+.reminderActions {
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  gap:
+    6px;
+}
+
+
+@media (
+  max-width: 720px
+) {
+  .inner {
+    width:
+      min(
+        100% - 28px,
+        1080px
+      );
+  }
+
+
+  .summaryGrid,
+  .settingsGrid {
+    grid-template-columns:
+      1fr;
+  }
+
+
+  .reminder {
+    grid-template-columns:
+      1fr;
+
+    gap:
+      12px;
+  }
+
+
+  .reminderActions {
+    justify-content:
+      flex-start;
+  }
+
+
+  .settingsActions {
+    flex-direction:
+      column;
+  }
+
+
+  .settingsActions button {
+    width:
+      100%;
+  }
+}
