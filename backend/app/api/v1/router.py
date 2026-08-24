@@ -5,6 +5,7 @@ from app.api.v1.routes import (
     check_history,
     health,
     maintenance,
+    reminders,
     service_records,
     vehicle_checks,
     vehicles,
@@ -59,4 +60,11 @@ api_router.include_router(
     maintenance.router,
     prefix="/vehicles",
     tags=["maintenance"],
+)
+
+
+api_router.include_router(
+    reminders.router,
+    prefix="/reminders",
+    tags=["reminders"],
 )
