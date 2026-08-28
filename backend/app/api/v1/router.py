@@ -1,6 +1,9 @@
-from fastapi import APIRouter
+from fastapi import (
+    APIRouter,
+)
 
 from app.api.v1.routes import (
+    ai,
     auth,
     check_history,
     health,
@@ -17,54 +20,79 @@ api_router = APIRouter()
 
 api_router.include_router(
     health.router,
-    tags=["health"],
+    tags=[
+        "health"
+    ],
 )
 
 
 api_router.include_router(
     auth.router,
     prefix="/auth",
-    tags=["authentication"],
+    tags=[
+        "authentication"
+    ],
 )
 
 
 api_router.include_router(
     vehicle_checks.router,
     prefix="/vehicle-checks",
-    tags=["vehicle checks"],
+    tags=[
+        "vehicle checks"
+    ],
 )
 
 
 api_router.include_router(
     check_history.router,
     prefix="/vehicle-checks",
-    tags=["check history"],
+    tags=[
+        "check history"
+    ],
 )
 
 
 api_router.include_router(
     vehicles.router,
     prefix="/vehicles",
-    tags=["vehicles"],
+    tags=[
+        "vehicles"
+    ],
 )
 
 
 api_router.include_router(
     service_records.router,
     prefix="/vehicles",
-    tags=["service history"],
+    tags=[
+        "service history"
+    ],
 )
 
 
 api_router.include_router(
     maintenance.router,
     prefix="/vehicles",
-    tags=["maintenance"],
+    tags=[
+        "maintenance"
+    ],
 )
 
 
 api_router.include_router(
     reminders.router,
     prefix="/reminders",
-    tags=["reminders"],
+    tags=[
+        "reminders"
+    ],
+)
+
+
+api_router.include_router(
+    ai.router,
+    prefix="/ai",
+    tags=[
+        "AI vehicle insights"
+    ],
 )

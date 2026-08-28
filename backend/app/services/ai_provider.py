@@ -1,22 +1,11 @@
 import json
 import os
-from typing import (
-    Protocol,
-    TypeVar,
-)
+import subprocess
+from typing import Protocol, TypeVar
 
-from pydantic import (
-    BaseModel,
-)
-
-from urllib.error import (
-    HTTPError,
-    URLError,
-)
-from urllib.request import (
-    Request,
-    urlopen,
-)
+from pydantic import BaseModel
+from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
 
 
 T = TypeVar(
@@ -25,81 +14,96 @@ T = TypeVar(
 )
 
 
-class AiProviderError(
-    Exception
-):
+class AiProviderError(Exception):
     pass
 
 
-class AiProviderUnavailableError(
-    AiProviderError
-):
+class AiProviderUnavailableError(AiProviderError):
     pass
 
 
-class AiModelMissingError(
-    AiProviderError
-):
+class AiModelMissingError(AiProviderError):
     pass
 
 
-class AiGenerationError(
-    AiProviderError
-):
+class AiGenerationError(AiProviderError):
     pass
 
 
-class AiProvider(
-    Protocol
-):
+class AiProvider(Protocol):
     model: str
 
     def check_status(
         self,
-    ) -> tuple[
-        bool,
-        str,
-    ]:
+    ) -> tuple[bool, str]:
         ...
-
 
     def generate_structured(
         self,
         *,
         system_prompt: str,
         user_prompt: str,
-        response_model:
-            type[T],
+        response_model: type[T],
     ) -> T:
         ...
+
+
+def _get_wsl_windows_host() -> str | None:
+    """
+    Return the Windows host IP when MyGarage is running inside WSL.
+    """
+    try:
+        result = subprocess.run(
+            [
+                "ip",
+                "route",
+                "show",
+                "default",
+            ],
+            capture_output=True,
+            text=True,
+            check=True,
+            timeout=2,
+        )
+
+        parts = result.stdout.strip().split()
+
+        if "via" not in parts:
+            return None
+
+        via_index = parts.index("via")
+
+        if (
+            via_index + 1
+            >= len(parts)
+        ):
+            return None
+
+        return parts[
+            via_index + 1
+        ]
+
+    except (
+        FileNotFoundError,
+        subprocess.SubprocessError,
+        ValueError,
+    ):
+        return None
 
 
 class OllamaProvider:
     def __init__(
         self,
-    ):
-        self.base_url = (
+    ) -> None:
+        configured_url = (
             os.getenv(
-                "OLLAMA_BASE_URL",
-                (
-                    "http://"
-                    "127.0.0.1:"
-                    "11434"
-                ),
-            )
-            .rstrip(
-                "/"
+                "OLLAMA_BASE_URL"
             )
         )
 
-        self.model = (
-            os.getenv(
-                "OLLAMA_MODEL",
-                (
-                    "qwen3:"
-                    "4b-instruct"
-                ),
-            )
+        self.model = os.getenv(
+            "OLLAMA_MODEL",
+            "qwen3:4b-instruct",
         )
 
         self.timeout_seconds = float(
@@ -116,15 +120,53 @@ class OllamaProvider:
             )
         )
 
+        self.base_urls: list[str] = []
 
-    def _request(
+        if configured_url:
+            self.base_urls.append(
+                configured_url.rstrip(
+                    "/"
+                )
+            )
+
+        self.base_urls.extend(
+            [
+                "http://127.0.0.1:11434",
+                "http://localhost:11434",
+            ]
+        )
+
+        windows_host = (
+            _get_wsl_windows_host()
+        )
+
+        if windows_host:
+            self.base_urls.append(
+                (
+                    f"http://"
+                    f"{windows_host}"
+                    f":11434"
+                )
+            )
+
+        self.base_urls = list(
+            dict.fromkeys(
+                self.base_urls
+            )
+        )
+
+        self.active_base_url: (
+            str | None
+        ) = None
+
+    def _request_url(
         self,
+        base_url: str,
         path: str,
         *,
         method: str = "GET",
-        payload:
-            dict
-            | None = None,
+        payload: dict | None = None,
+        timeout: float | None = None,
     ) -> dict:
         body = None
 
@@ -142,7 +184,7 @@ class OllamaProvider:
 
         request = Request(
             (
-                f"{self.base_url}"
+                f"{base_url}"
                 f"{path}"
             ),
             data=body,
@@ -154,8 +196,8 @@ class OllamaProvider:
             with urlopen(
                 request,
                 timeout=(
-                    self
-                    .timeout_seconds
+                    timeout
+                    or self.timeout_seconds
                 ),
             ) as response:
                 raw = (
@@ -165,18 +207,6 @@ class OllamaProvider:
                         "utf-8"
                     )
                 )
-
-        except URLError as exc:
-            raise (
-                AiProviderUnavailableError(
-                    (
-                        "Ollama is not "
-                        "reachable. Make "
-                        "sure Ollama is "
-                        "running locally."
-                    )
-                )
-            ) from exc
 
         except HTTPError as exc:
             try:
@@ -196,6 +226,17 @@ class OllamaProvider:
                 message
             ) from exc
 
+        except URLError as exc:
+            raise (
+                AiProviderUnavailableError(
+                    (
+                        f"Ollama is not "
+                        f"reachable at "
+                        f"{base_url}."
+                    )
+                )
+            ) from exc
+
         try:
             return json.loads(
                 raw
@@ -209,6 +250,95 @@ class OllamaProvider:
                 )
             ) from exc
 
+    def _find_ollama(
+        self,
+    ) -> tuple[
+        str | None,
+        dict | None,
+    ]:
+        if self.active_base_url:
+            try:
+                payload = (
+                    self._request_url(
+                        self.active_base_url,
+                        "/api/tags",
+                        timeout=3,
+                    )
+                )
+
+                return (
+                    self.active_base_url,
+                    payload,
+                )
+
+            except AiProviderError:
+                self.active_base_url = (
+                    None
+                )
+
+        for base_url in self.base_urls:
+            try:
+                payload = (
+                    self._request_url(
+                        base_url,
+                        "/api/tags",
+                        timeout=3,
+                    )
+                )
+
+                self.active_base_url = (
+                    base_url
+                )
+
+                return (
+                    base_url,
+                    payload,
+                )
+
+            except AiProviderError:
+                continue
+
+        return (
+            None,
+            None,
+        )
+
+    def _request(
+        self,
+        path: str,
+        *,
+        method: str = "GET",
+        payload: dict | None = None,
+    ) -> dict:
+        if not self.active_base_url:
+            base_url, _ = (
+                self._find_ollama()
+            )
+
+            if not base_url:
+                raise (
+                    AiProviderUnavailableError(
+                        (
+                            "Ollama is not "
+                            "reachable from "
+                            "MyGarage. Make "
+                            "sure Ollama is "
+                            "running on Windows."
+                        )
+                    )
+                )
+
+        assert (
+            self.active_base_url
+            is not None
+        )
+
+        return self._request_url(
+            self.active_base_url,
+            path,
+            method=method,
+            payload=payload,
+        )
 
     def check_status(
         self,
@@ -216,18 +346,22 @@ class OllamaProvider:
         bool,
         str,
     ]:
-        try:
-            payload = (
-                self._request(
-                    "/api/tags"
-                )
-            )
+        base_url, payload = (
+            self._find_ollama()
+        )
 
-        except AiProviderError as exc:
+        if (
+            base_url is None
+            or payload is None
+        ):
             return (
                 False,
-                str(
-                    exc
+                (
+                    "Ollama is not reachable. "
+                    "Make sure Ollama is "
+                    "running on Windows and "
+                    "port 11434 is accessible "
+                    "from WSL."
                 ),
             )
 
@@ -250,28 +384,27 @@ class OllamaProvider:
             return (
                 False,
                 (
-                    f"Ollama is running, "
-                    f"but {self.model} "
-                    f"is not installed."
+                    f"Ollama is reachable at "
+                    f"{base_url}, but "
+                    f"{self.model} is not "
+                    f"installed."
                 ),
             )
 
         return (
             True,
             (
-                f"{self.model} "
-                f"is ready."
+                f"{self.model} is ready "
+                f"through local Ollama."
             ),
         )
-
 
     def generate_structured(
         self,
         *,
         system_prompt: str,
         user_prompt: str,
-        response_model:
-            type[T],
+        response_model: type[T],
     ) -> T:
         available, message = (
             self.check_status()
@@ -294,53 +427,49 @@ class OllamaProvider:
                 )
             )
 
-        payload = (
-            self._request(
-                "/api/chat",
-                method="POST",
-                payload={
-                    "model":
-                        self.model,
+        payload = self._request(
+            "/api/chat",
+            method="POST",
+            payload={
+                "model":
+                    self.model,
 
-                    "messages": [
-                        {
-                            "role":
-                                "system",
-
-                            "content":
-                                system_prompt,
-                        },
-                        {
-                            "role":
-                                "user",
-
-                            "content":
-                                user_prompt,
-                        },
-                    ],
-
-                    "stream":
-                        False,
-
-                    "format":
-                        response_model
-                        .model_json_schema(),
-
-                    "keep_alive":
-                        "10m",
-
-                    "options": {
-                        "temperature":
-                            0.1,
-
-                        "num_ctx":
-                            self.num_ctx,
-
-                        "num_predict":
-                            900,
+                "messages": [
+                    {
+                        "role":
+                            "system",
+                        "content":
+                            system_prompt,
                     },
+                    {
+                        "role":
+                            "user",
+                        "content":
+                            user_prompt,
+                    },
+                ],
+
+                "stream":
+                    False,
+
+                "format":
+                    response_model
+                    .model_json_schema(),
+
+                "keep_alive":
+                    "10m",
+
+                "options": {
+                    "temperature":
+                        0.1,
+
+                    "num_ctx":
+                        self.num_ctx,
+
+                    "num_predict":
+                        900,
                 },
-            )
+            },
         )
 
         try:
@@ -352,10 +481,8 @@ class OllamaProvider:
                 ]
             )
 
-            parsed = (
-                json.loads(
-                    content
-                )
+            parsed = json.loads(
+                content
             )
 
             return (
@@ -375,8 +502,8 @@ class OllamaProvider:
                 AiGenerationError(
                     (
                         "The local AI "
-                        "returned an "
-                        "invalid response."
+                        "returned an invalid "
+                        "structured response."
                     )
                 )
             ) from exc
