@@ -30,6 +30,12 @@ import type {
   VehicleCheckResponse,
 } from "../../types/vehicle";
 
+import VehicleAiInsights from "../ai/VehicleAiInsights";
+
+import {
+  buildLiveAiSnapshot,
+} from "../ai/buildAiVehicleSnapshot";
+
 import MileageChart from "./MileageChart";
 import MotHistory from "./MotHistory";
 
@@ -48,21 +54,28 @@ import styles from "./VehicleChecker.module.css";
 type ActivePage =
   | "home"
   | "checks"
-  | "vehicles";
+  | "vehicles"
+  | "reminders";
 
 
 interface VehicleCheckerProps {
-  initialRegistration?: string;
+  initialRegistration?:
+    string;
 
-  autoCheck?: boolean;
+  autoCheck?:
+    boolean;
 
-  activePage?: ActivePage;
+  activePage?:
+    ActivePage;
 
-  resultOnly?: boolean;
+  resultOnly?:
+    boolean;
 
-  backHref?: string;
+  backHref?:
+    string;
 
-  backLabel?: string;
+  backLabel?:
+    string;
 }
 
 
@@ -79,12 +92,13 @@ export default function VehicleChecker({
 
   const {
     user,
-  } = useAuth();
+  } =
+    useAuth();
 
   const lastAutoCheck =
-    useRef<string | null>(
-      null,
-    );
+    useRef<
+      string | null
+    >(null);
 
   const [
     registration,
@@ -102,9 +116,10 @@ export default function VehicleChecker({
     vehicle,
     setVehicle,
   ] =
-    useState<VehicleCheckResponse | null>(
-      null,
-    );
+    useState<
+      VehicleCheckResponse
+      | null
+    >(null);
 
   const [
     loading,
@@ -121,44 +136,62 @@ export default function VehicleChecker({
     addingToGarage,
     setAddingToGarage,
   ] =
-    useState(false);
+    useState(
+      false
+    );
 
   const [
     error,
     setError,
   ] =
-    useState<string | null>(
-      null,
-    );
+    useState<
+      string | null
+    >(null);
 
   const [
     notice,
     setNotice,
   ] =
-    useState<string | null>(
-      null,
-    );
+    useState<
+      string | null
+    >(null);
 
 
   const runVehicleCheck =
     useCallback(
       async (
-        registrationToCheck: string,
+        registrationToCheck:
+          string,
       ) => {
         if (
-          !registrationToCheck.trim()
+          !registrationToCheck
+            .trim()
         ) {
           setError(
-            "Enter a registration number first.",
+            (
+              "Enter a registration "
+              + "number first."
+            ),
           );
 
           return;
         }
 
-        setLoading(true);
-        setError(null);
-        setNotice(null);
-        setVehicle(null);
+        setLoading(
+          true
+        );
+
+        setError(
+          null
+        );
+
+        setNotice(
+          null
+        );
+
+        setVehicle(
+          null
+        );
 
         try {
           const result =
@@ -167,7 +200,7 @@ export default function VehicleChecker({
             );
 
           setVehicle(
-            result,
+            result
           );
 
           setRegistration(
@@ -176,17 +209,23 @@ export default function VehicleChecker({
             ),
           );
 
-        } catch (caughtError) {
+        } catch (
+          caughtError
+        ) {
           if (
-            caughtError instanceof
-            ApiError
+            caughtError
+            instanceof ApiError
           ) {
             if (
-              caughtError.status ===
-              404
+              caughtError.status
+              === 404
             ) {
               setError(
-                "We could not find a vehicle with that registration.",
+                (
+                  "We could not find "
+                  + "a vehicle with "
+                  + "that registration."
+                ),
               );
 
             } else {
@@ -197,12 +236,19 @@ export default function VehicleChecker({
 
           } else {
             setError(
-              "We could not connect to MyGarage. Check that the backend is running and try again.",
+              (
+                "We could not connect "
+                + "to MyGarage. Check "
+                + "that the backend is "
+                + "running and try again."
+              ),
             );
           }
 
         } finally {
-          setLoading(false);
+          setLoading(
+            false
+          );
         }
       },
       [],
@@ -249,12 +295,14 @@ export default function VehicleChecker({
 
   async function handleSearch(
     event:
-      FormEvent<HTMLFormElement>,
+      FormEvent<
+        HTMLFormElement
+      >,
   ) {
     event.preventDefault();
 
     await runVehicleCheck(
-      registration,
+      registration
     );
   }
 
@@ -266,7 +314,7 @@ export default function VehicleChecker({
 
     if (!user) {
       router.push(
-        "/login",
+        "/login"
       );
 
       return;
@@ -278,9 +326,17 @@ export default function VehicleChecker({
       return;
     }
 
-    setAddingToGarage(true);
-    setError(null);
-    setNotice(null);
+    setAddingToGarage(
+      true
+    );
+
+    setError(
+      null
+    );
+
+    setNotice(
+      null
+    );
 
     try {
       const result =
@@ -300,18 +356,21 @@ export default function VehicleChecker({
 
       setNotice(
         `Added to My Vehicles. ${result.mot_tests_saved} MOT ${
-          result.mot_tests_saved === 1
+          result.mot_tests_saved
+          === 1
             ? "test was"
             : "tests were"
         } newly saved.`,
       );
 
-    } catch (caughtError) {
+    } catch (
+      caughtError
+    ) {
       if (
-        caughtError instanceof
-          ApiError
+        caughtError
+        instanceof ApiError
         && caughtError.status
-          === 409
+        === 409
       ) {
         setVehicle({
           ...vehicle,
@@ -321,12 +380,15 @@ export default function VehicleChecker({
         });
 
         setNotice(
-          "This vehicle is already in My Vehicles.",
+          (
+            "This vehicle is "
+            + "already in My Vehicles."
+          ),
         );
 
       } else if (
-        caughtError instanceof
-        ApiError
+        caughtError
+        instanceof ApiError
       ) {
         setError(
           caughtError.message,
@@ -334,13 +396,17 @@ export default function VehicleChecker({
 
       } else {
         setError(
-          "We could not add the vehicle to My Vehicles. Please try again.",
+          (
+            "We could not add the "
+            + "vehicle to My Vehicles. "
+            + "Please try again."
+          ),
         );
       }
 
     } finally {
       setAddingToGarage(
-        false,
+        false
       );
     }
   }
@@ -448,12 +514,16 @@ export default function VehicleChecker({
                       event,
                     ) =>
                       setRegistration(
-                        event.target.value
+                        event
+                          .target
+                          .value
                           .toUpperCase(),
                       )
                     }
                     placeholder="ENTER REG"
-                    maxLength={9}
+                    maxLength={
+                      9
+                    }
                     autoComplete="off"
                     spellCheck={
                       false
@@ -626,9 +696,11 @@ export default function VehicleChecker({
 
                       {vehicle.engine_size && (
                         <span>
-                          {vehicle.engine_size.toLocaleString(
-                            "en-GB",
-                          )}{" "}
+                          {vehicle
+                            .engine_size
+                            .toLocaleString(
+                              "en-GB",
+                            )}{" "}
                           cc
                         </span>
                       )}
@@ -708,13 +780,17 @@ export default function VehicleChecker({
                         <span
                           className={`mot-countdown ${motStatus.tone}`}
                         >
-                          {motStatus.timeRemainingLabel}
+                          {
+                            motStatus
+                              .timeRemainingLabel
+                          }
                         </span>
 
                         <span className="stat-detail">
                           Until{" "}
                           {formatDate(
-                            motStatus.expiryDate,
+                            motStatus
+                              .expiryDate,
                           )}
                         </span>
                       </div>
@@ -753,7 +829,10 @@ export default function VehicleChecker({
                     </span>
 
                     <strong>
-                      {vehicle.mot_tests_found}
+                      {
+                        vehicle
+                          .mot_tests_found
+                      }
                     </strong>
 
                     <span className="stat-detail">
@@ -777,15 +856,19 @@ export default function VehicleChecker({
 
                       <span
                         className={
-                          latestMot.test_result
+                          latestMot
+                            .test_result
                             ?.toUpperCase()
                           === "PASSED"
                             ? "result-badge passed"
                             : "result-badge failed"
                         }
                       >
-                        {latestMot.test_result
-                          ?? "Unknown"}
+                        {
+                          latestMot
+                            .test_result
+                          ?? "Unknown"
+                        }
                       </span>
                     </div>
 
@@ -797,7 +880,8 @@ export default function VehicleChecker({
 
                         <strong>
                           {formatDate(
-                            latestMot.completed_at,
+                            latestMot
+                              .completed_at,
                           )}
                         </strong>
                       </div>
@@ -809,8 +893,11 @@ export default function VehicleChecker({
 
                         <strong>
                           {formatMileage(
-                            latestMot.odometer_value,
-                            latestMot.odometer_unit,
+                            latestMot
+                              .odometer_value,
+
+                            latestMot
+                              .odometer_unit,
                           )}
                         </strong>
                       </div>
@@ -821,12 +908,24 @@ export default function VehicleChecker({
                         </span>
 
                         <strong>
-                          {latestMot.defects.length}
+                          {
+                            latestMot
+                              .defects
+                              .length
+                          }
                         </strong>
                       </div>
                     </div>
                   </section>
                 )}
+
+                <VehicleAiInsights
+                  snapshot={
+                    buildLiveAiSnapshot(
+                      vehicle,
+                    )
+                  }
+                />
 
                 <MileageChart
                   motTests={

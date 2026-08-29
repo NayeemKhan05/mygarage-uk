@@ -1,9 +1,12 @@
 import json
 import os
+import socket
 import subprocess
+
 from typing import Protocol, TypeVar
 
 from pydantic import BaseModel
+
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
@@ -18,15 +21,21 @@ class AiProviderError(Exception):
     pass
 
 
-class AiProviderUnavailableError(AiProviderError):
+class AiProviderUnavailableError(
+    AiProviderError
+):
     pass
 
 
-class AiModelMissingError(AiProviderError):
+class AiModelMissingError(
+    AiProviderError
+):
     pass
 
 
-class AiGenerationError(AiProviderError):
+class AiGenerationError(
+    AiProviderError
+):
     pass
 
 
@@ -49,9 +58,6 @@ class AiProvider(Protocol):
 
 
 def _get_wsl_windows_host() -> str | None:
-    """
-    Return the Windows host IP when MyGarage is running inside WSL.
-    """
     try:
         result = subprocess.run(
             [
@@ -66,21 +72,30 @@ def _get_wsl_windows_host() -> str | None:
             timeout=2,
         )
 
-        parts = result.stdout.strip().split()
+        parts = (
+            result
+            .stdout
+            .strip()
+            .split()
+        )
 
         if "via" not in parts:
             return None
 
-        via_index = parts.index("via")
+        index = (
+            parts.index(
+                "via"
+            )
+        )
 
         if (
-            via_index + 1
+            index + 1
             >= len(parts)
         ):
             return None
 
         return parts[
-            via_index + 1
+            index + 1
         ]
 
     except (
@@ -109,14 +124,28 @@ class OllamaProvider:
         self.timeout_seconds = float(
             os.getenv(
                 "OLLAMA_TIMEOUT_SECONDS",
-                "120",
+                "240",
+            )
+        )
+
+        self.status_timeout_seconds = float(
+            os.getenv(
+                "OLLAMA_STATUS_TIMEOUT_SECONDS",
+                "3",
             )
         )
 
         self.num_ctx = int(
             os.getenv(
                 "OLLAMA_NUM_CTX",
-                "8192",
+                "4096",
+            )
+        )
+
+        self.num_predict = int(
+            os.getenv(
+                "OLLAMA_NUM_PREDICT",
+                "420",
             )
         )
 
@@ -170,14 +199,13 @@ class OllamaProvider:
     ) -> dict:
         body = None
 
-        headers = {
-            "Content-Type":
-                "application/json",
-        }
-
         if payload is not None:
             body = json.dumps(
-                payload
+                payload,
+                separators=(
+                    ",",
+                    ":",
+                ),
             ).encode(
                 "utf-8"
             )
@@ -188,7 +216,10 @@ class OllamaProvider:
                 f"{path}"
             ),
             data=body,
-            headers=headers,
+            headers={
+                "Content-Type":
+                    "application/json",
+            },
             method=method,
         )
 
@@ -197,7 +228,8 @@ class OllamaProvider:
                 request,
                 timeout=(
                     timeout
-                    or self.timeout_seconds
+                    if timeout is not None
+                    else self.timeout_seconds
                 ),
             ) as response:
                 raw = (
@@ -226,7 +258,39 @@ class OllamaProvider:
                 message
             ) from exc
 
+        except (
+            TimeoutError,
+            socket.timeout,
+        ) as exc:
+            raise AiProviderUnavailableError(
+                (
+                    "Local AI generation timed "
+                    "out. Ollama is running, "
+                    "but the model took too "
+                    "long to respond."
+                )
+            ) from exc
+
         except URLError as exc:
+            if isinstance(
+                exc.reason,
+                (
+                    TimeoutError,
+                    socket.timeout,
+                ),
+            ):
+                raise (
+                    AiProviderUnavailableError(
+                        (
+                            "Local AI generation "
+                            "timed out. Ollama is "
+                            "running, but the "
+                            "model took too long "
+                            "to respond."
+                        )
+                    )
+                ) from exc
+
             raise (
                 AiProviderUnavailableError(
                     (
@@ -262,7 +326,9 @@ class OllamaProvider:
                     self._request_url(
                         self.active_base_url,
                         "/api/tags",
-                        timeout=3,
+                        timeout=(
+                            self.status_timeout_seconds
+                        ),
                     )
                 )
 
@@ -282,7 +348,9 @@ class OllamaProvider:
                     self._request_url(
                         base_url,
                         "/api/tags",
-                        timeout=3,
+                        timeout=(
+                            self.status_timeout_seconds
+                        ),
                     )
                 )
 
@@ -321,17 +389,21 @@ class OllamaProvider:
                         (
                             "Ollama is not "
                             "reachable from "
-                            "MyGarage. Make "
-                            "sure Ollama is "
-                            "running on Windows."
+                            "MyGarage."
                         )
                     )
                 )
 
-        assert (
-            self.active_base_url
-            is not None
-        )
+        if self.active_base_url is None:
+            raise (
+                AiProviderUnavailableError(
+                    (
+                        "Ollama is not "
+                        "reachable from "
+                        "MyGarage."
+                    )
+                )
+            )
 
         return self._request_url(
             self.active_base_url,
@@ -359,9 +431,7 @@ class OllamaProvider:
                 (
                     "Ollama is not reachable. "
                     "Make sure Ollama is "
-                    "running on Windows and "
-                    "port 11434 is accessible "
-                    "from WSL."
+                    "running on Windows."
                 ),
             )
 
@@ -384,10 +454,9 @@ class OllamaProvider:
             return (
                 False,
                 (
-                    f"Ollama is reachable at "
-                    f"{base_url}, but "
-                    f"{self.model} is not "
-                    f"installed."
+                    f"Ollama is reachable, "
+                    f"but {self.model} is "
+                    f"not installed."
                 ),
             )
 
@@ -427,56 +496,62 @@ class OllamaProvider:
                 )
             )
 
-        payload = self._request(
-            "/api/chat",
-            method="POST",
-            payload={
-                "model":
-                    self.model,
+        payload = (
+            self._request(
+                "/api/chat",
+                method="POST",
+                payload={
+                    "model":
+                        self.model,
 
-                "messages": [
-                    {
-                        "role":
-                            "system",
-                        "content":
-                            system_prompt,
+                    "messages": [
+                        {
+                            "role":
+                                "system",
+                            "content":
+                                system_prompt,
+                        },
+                        {
+                            "role":
+                                "user",
+                            "content":
+                                user_prompt,
+                        },
+                    ],
+
+                    "stream":
+                        False,
+
+                    "format":
+                        response_model
+                        .model_json_schema(),
+
+                    "keep_alive":
+                        "15m",
+
+                    "options": {
+                        "temperature":
+                            0.1,
+
+                        "num_ctx":
+                            self.num_ctx,
+
+                        "num_predict":
+                            self.num_predict,
                     },
-                    {
-                        "role":
-                            "user",
-                        "content":
-                            user_prompt,
-                    },
-                ],
-
-                "stream":
-                    False,
-
-                "format":
-                    response_model
-                    .model_json_schema(),
-
-                "keep_alive":
-                    "10m",
-
-                "options": {
-                    "temperature":
-                        0.1,
-
-                    "num_ctx":
-                        self.num_ctx,
-
-                    "num_predict":
-                        900,
                 },
-            },
+            )
         )
 
         try:
-            content = (
+            message = (
                 payload[
                     "message"
-                ][
+                ]
+            )
+
+            content = (
+                message[
                     "content"
                 ]
             )

@@ -230,22 +230,22 @@ class AiGeneratedNarrative(BaseModel):
 
     summary: str = Field(
         min_length=1,
-        max_length=1000,
+        max_length=600,
     )
 
     insights: list[AiInsightItem] = Field(
         default_factory=list,
-        max_length=4,
+        max_length=3,
     )
 
     mileage_analysis: str = Field(
         min_length=1,
-        max_length=700,
+        max_length=400,
     )
 
     supplementary_note: str | None = Field(
         default=None,
-        max_length=500,
+        max_length=350,
     )
 
 

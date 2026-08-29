@@ -19,116 +19,100 @@ from app.services.ai_provider import (
 
 
 INSIGHT_SYSTEM_PROMPT = """
-You are the AI Vehicle Insights feature for MyGarage UK.
+You are MyGarage UK's local vehicle-history assistant.
 
-You analyse structured UK vehicle records.
+Analyse only the supplied evidence.
 
-EVIDENCE PRIORITY
+DVSA MOT data is the primary evidence.
+Statistics and recurring-item counts were calculated by the backend and
+are authoritative.
 
-1. DVSA MOT history is the primary evidence.
-2. Backend-calculated MOT statistics and recurring-component counts are
-   deterministic and should be trusted.
-3. User-entered service records and maintenance schedules, when present,
-   are supplementary only.
-4. User-entered records may be incomplete.
+User-entered service or maintenance records, if present, are supplementary
+and may be incomplete.
 
-STRICT RULES
-
-- Never infer poor maintenance, neglect or poor servicing because service
-  records or maintenance records are absent.
-- Never describe missing MyGarage service records as a negative finding.
-- Never claim the supplied user-entered service history is complete.
-- Do not invent MOT defects, dates, mileages, repairs or counts.
-- Do not recount deterministic statistics differently.
-- Focus on recorded MOT patterns, advisories, failures, defect categories
-  and mileage trends.
-- A passed MOT does not prove a vehicle is mechanically perfect.
+Rules:
+- Never criticise missing service or maintenance records.
+- Never infer neglect from missing user-entered information.
+- Never invent defects, repairs, dates, mileage or counts.
 - Do not diagnose mechanical faults.
 - Do not predict component failure.
-- Do not claim a vehicle has been clocked if mileage decreases. You may
-  neutrally state that the recorded mileage decreased and that the record
-  would need checking.
-- Do not make accident-history claims.
-- Do not give a simplistic buy/don't-buy verdict.
-- Distinguish recorded evidence from interpretation.
+- A passed MOT does not prove perfect mechanical condition.
+- A mileage decrease is a recorded inconsistency, not proof of clocking.
+- Do not give an unsupported buy or don't-buy verdict.
 - Use British English.
-- Keep the answer concise and practical.
+- Be concise.
+- Prefer specific MOT evidence over general automotive advice.
 
-OVERALL TONE
+Produce no more than three insight cards.
 
-positive:
-The supplied MOT record contains relatively few notable concerns.
-
-neutral:
-The record is mixed or does not justify a stronger judgement.
-
-watch:
-There are recurring or repeated recorded patterns worth monitoring.
-
-attention:
-The supplied MOT history contains significant repeated failures,
-dangerous/major defects, or another clearly important recorded pattern.
-
-Return only the requested structured response.
+The summary should be roughly 2 to 4 sentences.
+Each insight detail should normally be 1 to 2 sentences.
+Mileage analysis should normally be 1 to 3 sentences.
 """
 
 
 QUESTION_SYSTEM_PROMPT = """
-You answer questions about a vehicle in MyGarage UK.
+You are MyGarage UK's local vehicle-history assistant.
 
-Use only the supplied vehicle evidence.
+Answer using only the supplied evidence.
 
 DVSA MOT history is the primary evidence.
+Backend-calculated statistics are authoritative.
 
-Backend-calculated MOT statistics are deterministic.
+User-entered service and maintenance records, if supplied, may be
+incomplete and are supplementary only.
 
-User-entered service and maintenance information, if supplied, is
-supplementary and may be incomplete.
-
-Never infer poor servicing or neglect from missing user-entered data.
+Never infer poor maintenance from missing user-entered records.
 
 Never invent:
 - defects
 - repairs
 - dates
 - mileages
-- service events
+- services
 - MOT results
 - exact counts
 
-Do not diagnose mechanical faults.
-Do not guarantee future reliability.
-Do not claim a vehicle has been clocked solely because a recorded mileage
-decreased.
-Do not give an unsupported buy/don't-buy verdict.
+Do not diagnose faults.
+Do not guarantee reliability.
+Do not claim clocking from a mileage decrease alone.
+Do not give unsupported buying verdicts.
 
 If the records cannot answer the question, say so.
 
 Use British English.
-Keep the answer under roughly 180 words.
-
-Return only the requested structured response.
+Answer concisely, normally under 120 words.
 """
 
 
 DISCLAIMER = (
-    "AI-generated interpretation of the "
-    "supplied vehicle records. It is not "
-    "a mechanical inspection, diagnosis "
-    "or guarantee of vehicle condition."
+    "AI-generated interpretation of the supplied "
+    "vehicle records. It is not a mechanical "
+    "inspection, diagnosis or guarantee of "
+    "vehicle condition."
 )
+
+
+def _compact_json(
+    value: dict,
+) -> str:
+    return json.dumps(
+        value,
+        ensure_ascii=False,
+        separators=(
+            ",",
+            ":",
+        ),
+        default=str,
+    )
 
 
 class VehicleAiService:
     def __init__(
         self,
-        provider:
-            AiProvider,
-    ):
-        self.provider = (
-            provider
-        )
-
+        provider: AiProvider,
+    ) -> None:
+        self.provider = provider
 
     def status(
         self,
@@ -140,24 +124,25 @@ class VehicleAiService:
 
         return AiStatusRead(
             available=available,
-
-            model=(
-                self.provider
-                .model
-            ),
-
+            model=self.provider.model,
             message=message,
         )
 
-
     def generate_insights(
         self,
-        vehicle:
-            AiVehicleSnapshot,
+        vehicle: AiVehicleSnapshot,
     ) -> AiVehicleInsights:
         context = (
             build_vehicle_context(
                 vehicle
+            )
+        )
+
+        user_prompt = (
+            "Analyse this vehicle's MOT history.\n"
+            "Use the deterministic statistics exactly as supplied.\n\n"
+            + _compact_json(
+                context
             )
         )
 
@@ -167,18 +152,9 @@ class VehicleAiService:
                 system_prompt=(
                     INSIGHT_SYSTEM_PROMPT
                 ),
-
                 user_prompt=(
-                    "Analyse this vehicle "
-                    "record.\n\n"
-                    "VEHICLE DATA:\n"
-                    + json.dumps(
-                        context,
-                        ensure_ascii=False,
-                        default=str,
-                    )
+                    user_prompt
                 ),
-
                 response_model=(
                     AiGeneratedNarrative
                 ),
@@ -202,7 +178,9 @@ class VehicleAiService:
             ),
 
             insights=(
-                narrative.insights
+                narrative.insights[
+                    :3
+                ]
             ),
 
             recurring_items=(
@@ -226,11 +204,9 @@ class VehicleAiService:
             ),
         )
 
-
     def answer_question(
         self,
-        vehicle:
-            AiVehicleSnapshot,
+        vehicle: AiVehicleSnapshot,
         question: str,
     ) -> AiQuestionResponse:
         context = (
@@ -239,25 +215,24 @@ class VehicleAiService:
             )
         )
 
+        user_prompt = (
+            "VEHICLE EVIDENCE:\n"
+            + _compact_json(
+                context
+            )
+            + "\n\nQUESTION:\n"
+            + question.strip()
+        )
+
         generated = (
             self.provider
             .generate_structured(
                 system_prompt=(
                     QUESTION_SYSTEM_PROMPT
                 ),
-
                 user_prompt=(
-                    "VEHICLE DATA:\n"
-                    + json.dumps(
-                        context,
-                        ensure_ascii=False,
-                        default=str,
-                    )
-                    + "\n\n"
-                    + "USER QUESTION:\n"
-                    + question.strip()
+                    user_prompt
                 ),
-
                 response_model=(
                     AiQuestionGenerated
                 ),

@@ -158,7 +158,7 @@ def _safe_value(
         value,
         str,
     ):
-        return value[:500]
+        return value[:300]
 
     if isinstance(
         value,
@@ -173,7 +173,7 @@ def _safe_value(
     if value is None:
         return None
 
-    return str(value)[:500]
+    return str(value)[:300]
 
 
 def _sanitise_manual_record(
@@ -253,7 +253,7 @@ def build_vehicle_context(
 
     mileage_points: list[dict[str, Any]] = []
 
-    serialised_tests: list[dict[str, Any]] = []
+    notable_tests: list[dict[str, Any]] = []
 
     for index, test in enumerate(tests):
         result = (
@@ -278,11 +278,11 @@ def build_vehicle_context(
             or f"unknown-{index}"
         )
 
-        test_defects: list[dict[str, Any]] = []
-
         components_seen: set[str] = set()
 
         descriptions_seen: set[str] = set()
+
+        compact_defects: list[dict[str, Any]] = []
 
         for defect in test.defects:
             recorded_items += 1
@@ -378,13 +378,13 @@ def build_vehicle_context(
                         normalised
                     ] = completed_at
 
-            test_defects.append(
-                {
-                    "text": defect.text,
-                    "type": defect_type,
-                    "dangerous": defect.dangerous,
-                }
-            )
+            if len(compact_defects) < 5:
+                compact_defects.append(
+                    {
+                        "type": defect_type,
+                        "text": defect.text[:220],
+                    }
+                )
 
         if (
             test.odometer_value
@@ -398,24 +398,34 @@ def build_vehicle_context(
                 }
             )
 
-        serialised_tests.append(
-            {
-                "completed_at": completed_at,
-                "result": result,
-                "expiry_date": (
-                    _date_text(
-                        test.expiry_date
-                    )
-                ),
-                "odometer_value": (
-                    test.odometer_value
-                ),
-                "odometer_unit": (
-                    test.odometer_unit
-                ),
-                "defects": test_defects,
-            }
+        is_notable = (
+            result == "FAILED"
+            or len(
+                test.defects
+            ) > 0
         )
+
+        if (
+            is_notable
+            and len(
+                notable_tests
+            ) < 10
+        ):
+            notable_tests.append(
+                {
+                    "date": completed_at,
+                    "result": result,
+                    "mileage": (
+                        test.odometer_value
+                    ),
+                    "unit": (
+                        test.odometer_unit
+                    ),
+                    "items": (
+                        compact_defects
+                    ),
+                }
+            )
 
     recurring_components = [
         {
@@ -444,7 +454,7 @@ def build_vehicle_context(
             "description": (
                 exact_labels[
                     description
-                ]
+                ][:220]
             ),
             "test_count": len(test_ids),
             "latest_date": (
@@ -510,50 +520,70 @@ def build_vehicle_context(
 
     annual_distance: dict[str, Any] | None = None
 
-    if len(mileage_points) >= 2:
-        first = mileage_points[0]
-        last = mileage_points[-1]
+    first_mileage = (
+        mileage_points[0]
+        if mileage_points
+        else None
+    )
 
+    latest_mileage = (
+        mileage_points[-1]
+        if mileage_points
+        else None
+    )
+
+    if (
+        first_mileage
+        and latest_mileage
+        and first_mileage["date"]
+        and latest_mileage["date"]
+    ):
         first_unit = (
-            first["unit"]
+            first_mileage["unit"]
             or ""
         ).lower()
 
-        last_unit = (
-            last["unit"]
+        latest_unit = (
+            latest_mileage["unit"]
             or ""
         ).lower()
 
         if (
-            first["date"]
-            and last["date"]
-            and first_unit
-            and first_unit == last_unit
-            and last["value"]
-            >= first["value"]
+            first_unit
+            and first_unit == latest_unit
+            and latest_mileage["value"]
+            >= first_mileage["value"]
         ):
             try:
                 first_date = (
                     datetime.fromisoformat(
-                        first["date"]
+                        first_mileage[
+                            "date"
+                        ]
                     )
                 )
 
-                last_date = (
+                latest_date = (
                     datetime.fromisoformat(
-                        last["date"]
+                        latest_mileage[
+                            "date"
+                        ]
                     )
                 )
 
                 days = (
-                    last_date
+                    latest_date
                     - first_date
                 ).days
 
                 if days >= 180:
                     distance = (
-                        last["value"]
-                        - first["value"]
+                        latest_mileage[
+                            "value"
+                        ]
+                        - first_mileage[
+                            "value"
+                        ]
                     )
 
                     annual_distance = {
@@ -563,7 +593,9 @@ def build_vehicle_context(
                             * 365
                         ),
                         "unit": (
-                            first["unit"]
+                            first_mileage[
+                                "unit"
+                            ]
                         ),
                     }
 
@@ -581,7 +613,7 @@ def build_vehicle_context(
         in (
             vehicle
             .supplementary_service_records[
-                :12
+                :5
             ]
         )
     ]
@@ -600,7 +632,7 @@ def build_vehicle_context(
         in (
             vehicle
             .supplementary_maintenance_items[
-                :12
+                :5
             ]
         )
     ]
@@ -617,20 +649,6 @@ def build_vehicle_context(
             .isoformat()
         ),
 
-        "evidence_rules": {
-            "primary": (
-                "DVSA MOT history is the "
-                "primary evidence source."
-            ),
-
-            "important": (
-                "Absence of user-entered "
-                "service or maintenance data "
-                "must never be treated as "
-                "evidence of poor maintenance."
-            ),
-        },
-
         "vehicle": {
             "registration": (
                 vehicle.registration
@@ -646,9 +664,6 @@ def build_vehicle_context(
             ),
             "engine_size": (
                 vehicle.engine_size
-            ),
-            "colour": (
-                vehicle.colour
             ),
             "year": (
                 vehicle.year
@@ -700,21 +715,22 @@ def build_vehicle_context(
 
             "recurring_components": (
                 recurring_components[
-                    :8
+                    :6
                 ]
             ),
 
             "repeated_exact_items": (
                 repeated_descriptions[
-                    :8
+                    :5
                 ]
             ),
 
             "mileage": {
-                "points": (
-                    mileage_points[
-                        -30:
-                    ]
+                "first_reading": (
+                    first_mileage
+                ),
+                "latest_reading": (
+                    latest_mileage
                 ),
                 "annual_distance_estimate": (
                     annual_distance
@@ -722,12 +738,15 @@ def build_vehicle_context(
                 "recorded_decreases": (
                     mileage_decreases
                 ),
+                "recent_points": (
+                    mileage_points[
+                        -8:
+                    ]
+                ),
             },
 
-            "tests": (
-                serialised_tests[
-                    :30
-                ]
+            "notable_tests": (
+                notable_tests
             ),
         },
     }
@@ -742,8 +761,9 @@ def build_vehicle_context(
             "warning": (
                 "These records were entered "
                 "manually by the user and may "
-                "be partial. They are "
-                "supplementary only."
+                "be partial or incomplete. "
+                "They must only be treated as "
+                "supplementary context."
             ),
 
             "service_records": (
