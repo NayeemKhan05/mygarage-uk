@@ -11,12 +11,10 @@ import {
   AiApiError,
   askVehicleQuestion,
   generateVehicleInsights,
-  getAiStatus,
 } from "../../lib/aiApi";
 
 import type {
   AiQuestionResponse,
-  AiStatus,
   AiVehicleInsights,
   AiVehicleSnapshot,
 } from "../../types/ai";
@@ -30,51 +28,9 @@ interface VehicleAiInsightsProps {
 }
 
 
-function toneLabel(
-  tone:
-    AiVehicleInsights[
-      "overall_tone"
-    ],
-): string {
-  if (
-    tone === "positive"
-  ) {
-    return "Positive";
-  }
-
-  if (
-    tone === "watch"
-  ) {
-    return "Worth watching";
-  }
-
-  if (
-    tone === "attention"
-  ) {
-    return "Needs attention";
-  }
-
-  return "Neutral";
-}
-
-
 export default function VehicleAiInsights({
   snapshot,
 }: VehicleAiInsightsProps) {
-  const [
-    status,
-    setStatus,
-  ] =
-    useState<
-      AiStatus | null
-    >(null);
-
-  const [
-    statusLoading,
-    setStatusLoading,
-  ] =
-    useState(true);
-
   const [
     insights,
     setInsights,
@@ -144,60 +100,6 @@ export default function VehicleAiInsights({
 
 
   useEffect(() => {
-    let cancelled =
-      false;
-
-    async function loadStatus() {
-      try {
-        const result =
-          await getAiStatus();
-
-        if (!cancelled) {
-          setStatus(
-            result,
-          );
-        }
-
-      } catch {
-        if (!cancelled) {
-          setStatus({
-            available:
-              false,
-
-            model:
-              (
-                "qwen3:"
-                + "4b-instruct"
-              ),
-
-            message:
-              (
-                "The local AI "
-                + "service is "
-                + "unavailable."
-              ),
-          });
-        }
-
-      } finally {
-        if (!cancelled) {
-          setStatusLoading(
-            false,
-          );
-        }
-      }
-    }
-
-    void loadStatus();
-
-    return () => {
-      cancelled =
-        true;
-    };
-  }, []);
-
-
-  useEffect(() => {
     setInsights(
       null
     );
@@ -256,9 +158,9 @@ export default function VehicleAiInsights({
       } else {
         setError(
           (
-            "We could not "
-            + "generate local "
-            + "AI insights."
+            "We couldn't analyse "
+            + "this vehicle right now. "
+            + "Please try again."
           ),
         );
       }
@@ -323,9 +225,9 @@ export default function VehicleAiInsights({
       } else {
         setError(
           (
-            "We could not "
-            + "answer that "
-            + "question."
+            "We couldn't answer "
+            + "that question right now. "
+            + "Please try again."
           ),
         );
       }
@@ -349,7 +251,11 @@ export default function VehicleAiInsights({
           styles.header
         }
       >
-        <div>
+        <div
+          className={
+            styles.headerContent
+          }
+        >
           <div
             className={
               styles.titleRow
@@ -364,9 +270,19 @@ export default function VehicleAiInsights({
               ✦
             </span>
 
-            <h2>
-              AI Vehicle Insights
-            </h2>
+            <div>
+              <span
+                className={
+                  styles.eyebrow
+                }
+              >
+                Vehicle history analysis
+              </span>
+
+              <h2>
+                AI Vehicle Insights
+              </h2>
+            </div>
           </div>
 
           <p
@@ -374,48 +290,25 @@ export default function VehicleAiInsights({
               styles.description
             }
           >
-            Local AI analysis grounded
-            primarily in this vehicle&apos;s
-            DVSA MOT history. Owner-entered
-            records are only supplementary
-            when available.
+            Understand this vehicle&apos;s
+            recent history at a glance.
+            MyGarage reviews MOT records
+            from the last 5 years to
+            highlight recurring issues,
+            failures and mileage patterns.
           </p>
 
-          <div
+          <p
             className={
-              styles.badges
+              styles.contextNote
             }
           >
-            <span
-              className={
-                styles.badge
-              }
-            >
-              MOT-first analysis
-            </span>
-
-            <span
-              className={
-                styles.modelBadge
-              }
-            >
-              {
-                status?.model
-                ?? (
-                  "qwen3:"
-                  + "4b-instruct"
-                )
-              }
-            </span>
-
-            <span
-              className={
-                styles.modelBadge
-              }
-            >
-              Runs locally
-            </span>
-          </div>
+            Any service or maintenance
+            information you&apos;ve added
+            may provide extra context,
+            but MOT records remain the
+            main source for this analysis.
+          </p>
         </div>
 
         <button
@@ -425,12 +318,6 @@ export default function VehicleAiInsights({
           type="button"
           disabled={
             loading
-            || statusLoading
-            || (
-              status
-              !== null
-              && !status.available
-            )
           }
           onClick={
             handleGenerate
@@ -439,23 +326,10 @@ export default function VehicleAiInsights({
           {loading
             ? "Analysing..."
             : insights
-              ? "Refresh insights"
-              : "Generate insights"}
+              ? "Refresh analysis"
+              : "Analyse recent MOTs"}
         </button>
       </div>
-
-      {!statusLoading
-        && status && (
-          <div
-            className={`${styles.statusMessage} ${
-              status.available
-                ? ""
-                : styles.unavailable
-            }`}
-          >
-            {status.message}
-          </div>
-        )}
 
       {loading && (
         <div
@@ -467,8 +341,16 @@ export default function VehicleAiInsights({
             className="loader"
           />
 
-          Analysing MOT history
-          locally...
+          <div>
+            <strong>
+              Reviewing recent MOT history
+            </strong>
+
+            <span>
+              Looking for recurring issues,
+              failures and mileage patterns.
+            </span>
+          </div>
         </div>
       )}
 
@@ -490,23 +372,17 @@ export default function VehicleAiInsights({
               styles.content
             }
           >
-            <div
+            <section
               className={
-                styles.summaryRow
+                styles.summarySection
               }
             >
               <span
-                className={`${styles.tone} ${
-                  styles[
-                    insights
-                      .overall_tone
-                  ]
-                }`}
+                className={
+                  styles.sectionEyebrow
+                }
               >
-                {toneLabel(
-                  insights
-                    .overall_tone,
-                )}
+                Recent MOT summary
               </span>
 
               <p
@@ -516,7 +392,7 @@ export default function VehicleAiInsights({
               >
                 {insights.summary}
               </p>
-            </div>
+            </section>
 
             <div
               className={
@@ -539,6 +415,10 @@ export default function VehicleAiInsights({
                       .tests
                   }
                 </strong>
+
+                <small>
+                  In the analysis period
+                </small>
               </div>
 
               <div
@@ -557,6 +437,10 @@ export default function VehicleAiInsights({
                       .failed
                   }
                 </strong>
+
+                <small>
+                  Recorded failed tests
+                </small>
               </div>
 
               <div
@@ -575,6 +459,10 @@ export default function VehicleAiInsights({
                       .advisory
                   }
                 </strong>
+
+                <small>
+                  Recorded advisory items
+                </small>
               </div>
 
               <div
@@ -583,7 +471,7 @@ export default function VehicleAiInsights({
                 }
               >
                 <span>
-                  Major
+                  Major defects
                 </span>
 
                 <strong>
@@ -593,88 +481,148 @@ export default function VehicleAiInsights({
                       .major
                   }
                 </strong>
+
+                <small>
+                  Recorded major items
+                </small>
               </div>
             </div>
 
             {insights
               .insights
               .length > 0 && (
-                <div
+                <section
                   className={
-                    styles.insightGrid
+                    styles.section
                   }
                 >
-                  {insights
-                    .insights
-                    .map(
-                      (
-                        insight,
-                        index,
-                      ) => (
-                        <article
-                          className={
-                            styles.insight
-                          }
-                          key={
-                            `${insight.title}-${index}`
-                          }
-                        >
-                          <div
+                  <div
+                    className={
+                      styles.sectionHeading
+                    }
+                  >
+                    <div>
+                      <span
+                        className={
+                          styles.sectionEyebrow
+                        }
+                      >
+                        Patterns found
+                      </span>
+
+                      <h3>
+                        Key insights
+                      </h3>
+                    </div>
+                  </div>
+
+                  <div
+                    className={
+                      styles.insightGrid
+                    }
+                  >
+                    {insights
+                      .insights
+                      .map(
+                        (
+                          insight,
+                          index,
+                        ) => (
+                          <article
                             className={
-                              styles.insightTitle
+                              styles.insight
+                            }
+                            key={
+                              `${insight.title}-${index}`
                             }
                           >
-                            <span
-                              className={`${styles.dot} ${
-                                styles[
-                                  insight.level
-                                ]
-                              }`}
-                            />
+                            <div
+                              className={
+                                styles.insightTitle
+                              }
+                            >
+                              <span
+                                className={`${styles.dot} ${
+                                  styles[
+                                    insight.level
+                                  ]
+                                }`}
+                              />
 
-                            <h3>
+                              <h4>
+                                {
+                                  insight
+                                    .title
+                                }
+                              </h4>
+                            </div>
+
+                            <p>
                               {
                                 insight
-                                  .title
+                                  .detail
                               }
-                            </h3>
-                          </div>
+                            </p>
 
-                          <p>
-                            {
-                              insight
-                                .detail
-                            }
-                          </p>
-
-                          <span
-                            className={
-                              styles.evidence
-                            }
-                          >
-                            Evidence:{" "}
-                            {
-                              insight
-                                .evidence
-                            }
-                          </span>
-                        </article>
-                      ),
-                    )}
-                </div>
+                            <span
+                              className={
+                                styles.evidence
+                              }
+                            >
+                              <strong>
+                                Based on:
+                              </strong>{" "}
+                              {
+                                insight
+                                  .evidence
+                              }
+                            </span>
+                          </article>
+                        ),
+                      )}
+                  </div>
+                </section>
               )}
 
             {insights
               .recurring_items
               .length > 0 && (
-                <div
+                <section
                   className={
                     styles.section
                   }
                 >
-                  <h3>
-                    Recurring MOT areas
-                  </h3>
+                  <div
+                    className={
+                      styles.sectionHeading
+                    }
+                  >
+                    <div>
+                      <span
+                        className={
+                          styles.sectionEyebrow
+                        }
+                      >
+                        Repeated findings
+                      </span>
+
+                      <h3>
+                        Recurring MOT areas
+                      </h3>
+                    </div>
+                  </div>
+
+                  <p
+                    className={
+                      styles.sectionCopy
+                    }
+                  >
+                    These areas were mentioned
+                    on more than one recent MOT.
+                    Repeated findings do not
+                    necessarily mean the same
+                    fault remained unresolved.
+                  </p>
 
                   <div
                     className={
@@ -709,17 +657,33 @@ export default function VehicleAiInsights({
                         ),
                       )}
                   </div>
-                </div>
+                </section>
               )}
 
-            <div
+            <section
               className={
                 styles.section
               }
             >
-              <h3>
-                Mileage analysis
-              </h3>
+              <div
+                className={
+                  styles.sectionHeading
+                }
+              >
+                <div>
+                  <span
+                    className={
+                      styles.sectionEyebrow
+                    }
+                  >
+                    Recorded usage
+                  </span>
+
+                  <h3>
+                    Mileage analysis
+                  </h3>
+                </div>
+              </div>
 
               <p
                 className={
@@ -731,7 +695,7 @@ export default function VehicleAiInsights({
                     .mileage_analysis
                 }
               </p>
-            </div>
+            </section>
 
             {insights
               .supplementary_note && (
@@ -740,30 +704,54 @@ export default function VehicleAiInsights({
                     styles.supplementary
                   }
                 >
-                  {
-                    insights
-                      .supplementary_note
-                  }
+                  <strong>
+                    Additional context
+                  </strong>
+
+                  <span>
+                    {
+                      insights
+                        .supplementary_note
+                    }
+                  </span>
                 </div>
               )}
 
-            <div
+            <section
               className={
                 styles.ask
               }
             >
-              <h3>
-                Ask about this vehicle
-              </h3>
+              <div
+                className={
+                  styles.sectionHeading
+                }
+              >
+                <div>
+                  <span
+                    className={
+                      styles.sectionEyebrow
+                    }
+                  >
+                    Explore the history
+                  </span>
+
+                  <h3>
+                    Ask about this vehicle
+                  </h3>
+                </div>
+              </div>
 
               <p
                 className={
                   styles.askCopy
                 }
               >
-                Ask about recurring MOT
-                issues, failures, advisories
-                or mileage patterns.
+                Ask about failures,
+                advisories, recurring issues
+                or mileage recorded across
+                the vehicle&apos;s recent MOT
+                history.
               </p>
 
               <form
@@ -809,8 +797,8 @@ export default function VehicleAiInsights({
                   }
                 >
                   {asking
-                    ? "Asking..."
-                    : "Ask AI"}
+                    ? "Checking..."
+                    : "Ask"}
                 </button>
               </form>
 
@@ -821,7 +809,7 @@ export default function VehicleAiInsights({
                   }
                 >
                   <span>
-                    Local AI answer
+                    Answer
                   </span>
 
                   <p>
@@ -829,7 +817,7 @@ export default function VehicleAiInsights({
                   </p>
                 </div>
               )}
-            </div>
+            </section>
 
             <p
               className={
