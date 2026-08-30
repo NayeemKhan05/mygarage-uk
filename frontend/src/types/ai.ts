@@ -12,6 +12,14 @@ export type AiInsightLevel =
   | "attention";
 
 
+export type AiRatingTone =
+  | "excellent"
+  | "good"
+  | "fair"
+  | "attention"
+  | "concerning";
+
+
 export interface AiDefectSnapshot {
   text: string;
 
@@ -84,14 +92,19 @@ export interface AiMotStats {
   tests: number;
 
   passed: number;
+
   failed: number;
 
   recorded_items: number;
 
   dangerous: number;
+
   major: number;
+
   minor: number;
+
   advisory: number;
+
   prs: number;
 
   mileage_points: number;
@@ -122,11 +135,26 @@ export interface AiRecurringItem {
 }
 
 
+export interface AiVehicleRating {
+  score: number;
+
+  label: string;
+
+  tone:
+    AiRatingTone;
+
+  explanation: string;
+}
+
+
 export interface AiVehicleInsights {
   overall_tone:
     AiTone;
 
   summary: string;
+
+  rating:
+    AiVehicleRating;
 
   mot_stats:
     AiMotStats;

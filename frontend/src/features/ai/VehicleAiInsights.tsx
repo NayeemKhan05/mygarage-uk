@@ -297,18 +297,6 @@ export default function VehicleAiInsights({
             highlight recurring issues,
             failures and mileage patterns.
           </p>
-
-          <p
-            className={
-              styles.contextNote
-            }
-          >
-            Any service or maintenance
-            information you&apos;ve added
-            may provide extra context,
-            but MOT records remain the
-            main source for this analysis.
-          </p>
         </div>
 
         <button
@@ -372,6 +360,143 @@ export default function VehicleAiInsights({
               styles.content
             }
           >
+            <section
+              className={
+                styles.ratingSection
+              }
+            >
+              <div
+                className={
+                  styles.ratingTop
+                }
+              >
+                <div>
+                  <span
+                    className={
+                      styles.sectionEyebrow
+                    }
+                  >
+                    Recent MOT history rating
+                  </span>
+
+                  <div
+                    className={
+                      styles.ratingHeading
+                    }
+                  >
+                    <strong
+                      className={`${styles.ratingScore} ${
+                        styles[
+                          insights
+                            .rating
+                            .tone
+                        ]
+                      }`}
+                    >
+                      {
+                        insights
+                          .rating
+                          .score
+                      }
+                      <small>
+                        /100
+                      </small>
+                    </strong>
+
+                    <span
+                      className={`${styles.ratingLabel} ${
+                        styles[
+                          insights
+                            .rating
+                            .tone
+                        ]
+                      }`}
+                    >
+                      {
+                        insights
+                          .rating
+                          .label
+                      }
+                    </span>
+                  </div>
+                </div>
+
+                <p
+                  className={
+                    styles.ratingExplanation
+                  }
+                >
+                  {
+                    insights
+                      .rating
+                      .explanation
+                  }
+                </p>
+              </div>
+
+              <div
+                className={
+                  styles.ratingTrack
+                }
+                aria-hidden="true"
+              >
+                <div
+                  className={`${styles.ratingFill} ${
+                    styles[
+                      insights
+                        .rating
+                        .tone
+                    ]
+                  }`}
+                  style={{
+                    width:
+                      `${
+                        insights
+                          .rating
+                          .score
+                      }%`,
+                  }}
+                />
+              </div>
+
+              <div
+                className={
+                  styles.ratingScale
+                }
+              >
+                <span>
+                  Concerning
+                </span>
+
+                <span>
+                  Needs attention
+                </span>
+
+                <span>
+                  Fair
+                </span>
+
+                <span>
+                  Good
+                </span>
+
+                <span>
+                  Excellent
+                </span>
+              </div>
+
+              <p
+                className={
+                  styles.ratingNote
+                }
+              >
+                Based on MOT records from
+                the last 5 years. This is a
+                history-based rating, not a
+                mechanical inspection.
+              </p>
+            </section>
+
             <section
               className={
                 styles.summarySection
