@@ -20,6 +20,15 @@ AiInsightLevel = Literal[
 ]
 
 
+AiRatingTone = Literal[
+    "excellent",
+    "good",
+    "fair",
+    "attention",
+    "concerning",
+]
+
+
 class AiDefectInput(BaseModel):
     text: str
 
@@ -78,15 +87,11 @@ class AiVehicleSnapshot(BaseModel):
         default_factory=list,
     )
 
-    supplementary_service_records: list[
-        dict[str, Any]
-    ] = Field(
+    supplementary_service_records: list[dict[str, Any]] = Field(
         default_factory=list,
     )
 
-    supplementary_maintenance_items: list[
-        dict[str, Any]
-    ] = Field(
+    supplementary_maintenance_items: list[dict[str, Any]] = Field(
         default_factory=list,
     )
 
@@ -161,6 +166,19 @@ class AiRecurringItem(BaseModel):
     latest_date: str | None = None
 
 
+class AiVehicleRating(BaseModel):
+    score: int = Field(
+        ge=0,
+        le=100,
+    )
+
+    label: str
+
+    tone: AiRatingTone
+
+    explanation: str
+
+
 class AiGeneratedNarrative(BaseModel):
     overall_tone: AiTone
 
@@ -179,6 +197,8 @@ class AiVehicleInsights(BaseModel):
     overall_tone: AiTone
 
     summary: str
+
+    rating: AiVehicleRating
 
     mot_stats: AiMotStats
 

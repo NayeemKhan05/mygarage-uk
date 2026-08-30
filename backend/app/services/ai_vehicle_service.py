@@ -19,6 +19,9 @@ from app.services.ai_context import (
 from app.services.ai_provider import (
     AiProvider,
 )
+from app.services.ai_rating import (
+    build_vehicle_rating,
+)
 
 
 INSIGHT_SYSTEM_PROMPT = """
@@ -321,8 +324,7 @@ def _fallback_summary(
     if recurring:
         labels = ", ".join(
             item["label"]
-            for item
-            in recurring[:3]
+            for item in recurring[:3]
         )
 
         summary += (
@@ -615,9 +617,7 @@ def _build_narrative(
             .overall_tone
         )
 
-    insights: list[
-        AiInsightItem
-    ] = []
+    insights: list[AiInsightItem] = []
 
     for index in range(
         1,
@@ -824,6 +824,12 @@ class VehicleAiService:
             )
         )
 
+        rating = (
+            build_vehicle_rating(
+                context
+            )
+        )
+
         return AiVehicleInsights(
             overall_tone=(
                 narrative
@@ -833,6 +839,8 @@ class VehicleAiService:
             summary=(
                 narrative.summary
             ),
+
+            rating=rating,
 
             mot_stats=(
                 build_mot_stats(

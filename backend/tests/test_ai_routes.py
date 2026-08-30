@@ -17,15 +17,9 @@ class FakeAiService:
     ):
         return AiStatusRead(
             available=True,
-            model=(
-                "qwen3:"
-                "4b-instruct"
-            ),
-            message=(
-                "Local model ready."
-            ),
+            model="qwen3:4b-instruct",
+            message="Local model ready.",
         )
-
 
     def generate_insights(
         self,
@@ -35,10 +29,20 @@ class FakeAiService:
             overall_tone="watch",
 
             summary=(
-                "The supplied MOT "
-                "history contains a "
-                "recurring tyre pattern."
+                "The supplied MOT history contains "
+                "a recurring tyre pattern."
             ),
+
+            rating={
+                "score": 87,
+                "label": "Good",
+                "tone": "good",
+                "explanation": (
+                    "The recent MOT history is generally "
+                    "positive, with only limited issues "
+                    "affecting the rating."
+                ),
+            },
 
             mot_stats={
                 "tests": 2,
@@ -56,23 +60,18 @@ class FakeAiService:
 
             insights=[
                 AiInsightItem(
-                    title=(
-                        "Tyres recur"
-                    ),
+                    title="Tyres recur",
 
                     detail=(
-                        "Tyre-related "
-                        "items appear "
-                        "across more than "
-                        "one MOT."
+                        "Tyre-related items appear "
+                        "across more than one MOT."
                     ),
 
                     level="watch",
 
                     evidence=(
-                        "Tyre-related "
-                        "items appear on "
-                        "two MOT tests."
+                        "Tyre-related items appear "
+                        "on two MOT tests."
                     ),
                 ),
             ],
@@ -80,34 +79,24 @@ class FakeAiService:
             recurring_items=[
                 {
                     "label":
-                        (
-                            "Tyres and "
-                            "wheels"
-                        ),
+                        "Tyres and wheels",
 
                     "count":
                         2,
 
                     "latest_date":
-                        (
-                            "2026-01-01"
-                            "T00:00:00"
-                        ),
+                        "2026-01-01T00:00:00",
                 },
             ],
 
             mileage_analysis=(
-                "Recorded mileage "
-                "increases consistently."
+                "Recorded mileage increases consistently."
             ),
 
             supplementary_note=None,
 
-            disclaimer=(
-                "Test disclaimer"
-            ),
+            disclaimer="Test disclaimer",
         )
-
 
     def answer_question(
         self,
@@ -116,15 +105,11 @@ class FakeAiService:
     ):
         return AiQuestionResponse(
             answer=(
-                "The supplied MOT "
-                "record contains "
-                "repeated tyre-related "
-                "items."
+                "The supplied MOT record contains "
+                "repeated tyre-related items."
             ),
 
-            disclaimer=(
-                "Test disclaimer"
-            ),
+            disclaimer="Test disclaimer",
         )
 
 
@@ -148,10 +133,7 @@ def vehicle_payload():
         "mot_tests": [
             {
                 "completed_at":
-                    (
-                        "2026-01-01"
-                        "T10:00:00"
-                    ),
+                    "2026-01-01T10:00:00",
 
                 "test_result":
                     "PASSED",
@@ -215,10 +197,8 @@ def test_vehicle_insights(
 
     try:
         response = client.post(
-            (
-                "/api/v1/ai/"
-                "vehicle-insights"
-            ),
+            "/api/v1/ai/vehicle-insights",
+
             json={
                 "vehicle":
                     vehicle_payload(),
@@ -230,12 +210,31 @@ def test_vehicle_insights(
             == 200
         )
 
+        body = response.json()
+
         assert (
-            response
-            .json()[
+            body[
                 "overall_tone"
             ]
             == "watch"
+        )
+
+        assert (
+            body[
+                "rating"
+            ][
+                "score"
+            ]
+            == 87
+        )
+
+        assert (
+            body[
+                "rating"
+            ][
+                "label"
+            ]
+            == "Good"
         )
 
     finally:
@@ -257,10 +256,8 @@ def test_vehicle_question(
 
     try:
         response = client.post(
-            (
-                "/api/v1/ai/"
-                "vehicle-question"
-            ),
+            "/api/v1/ai/vehicle-question",
+
             json={
                 "vehicle":
                     vehicle_payload(),
