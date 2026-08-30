@@ -11,6 +11,9 @@ from app.schemas.ai import (
 )
 
 
+AI_HISTORY_YEARS = 5
+
+
 ISSUE_COMPONENTS = {
     "Brakes": (
         "brake",
@@ -31,6 +34,8 @@ ISSUE_COMPONENTS = {
         "anti-roll",
         "anti roll",
         "ball joint",
+        "bush",
+        "bushing",
     ),
     "Steering": (
         "steering",
@@ -72,6 +77,18 @@ ISSUE_COMPONENTS = {
         "drive shaft",
         "cv joint",
         "constant velocity",
+    ),
+    "Cooling system": (
+        "coolant",
+        "radiator",
+        "cooling system",
+        "water pump",
+    ),
+    "Leaks": (
+        "oil leak",
+        "fluid leak",
+        "leaking",
+        "leak",
     ),
     "Seat belts and restraints": (
         "seat belt",
@@ -142,6 +159,39 @@ def _component_for_issue(
     return None
 
 
+def _history_cutoff() -> date:
+    today = date.today()
+
+    try:
+        return today.replace(
+            year=(
+                today.year
+                - AI_HISTORY_YEARS
+            )
+        )
+
+    except ValueError:
+        return today.replace(
+            year=(
+                today.year
+                - AI_HISTORY_YEARS
+            ),
+            day=28,
+        )
+
+
+def _within_history_window(
+    completed_at: datetime | None,
+) -> bool:
+    if completed_at is None:
+        return False
+
+    return (
+        completed_at.date()
+        >= _history_cutoff()
+    )
+
+
 def _safe_value(
     value: Any,
 ) -> Any:
@@ -156,13 +206,8 @@ def _safe_value(
 
     if isinstance(
         value,
-        str,
-    ):
-        return value[:300]
-
-    if isinstance(
-        value,
         (
+            str,
             int,
             float,
             bool,
@@ -173,7 +218,7 @@ def _safe_value(
     if value is None:
         return None
 
-    return str(value)[:300]
+    return str(value)
 
 
 def _sanitise_manual_record(
@@ -218,44 +263,96 @@ def _mot_sort_key(
     return completed_at.isoformat()
 
 
+def _serialise_defect(
+    defect: Any,
+) -> dict[str, Any]:
+    return {
+        "type": (
+            defect.type
+            or "UNKNOWN"
+        ).upper(),
+
+        "text": defect.text,
+
+        "dangerous": (
+            defect.dangerous
+        ),
+    }
+
+
 def build_vehicle_context(
     vehicle: AiVehicleSnapshot,
 ) -> dict[str, Any]:
-    tests = sorted(
+    all_tests = sorted(
         vehicle.mot_tests,
-        key=lambda item: (
+        key=lambda test: (
             _mot_sort_key(
-                item.completed_at
+                test.completed_at
             )
         ),
         reverse=True,
     )
 
+    recent_tests = [
+        test
+        for test in all_tests
+        if _within_history_window(
+            test.completed_at
+        )
+    ]
+
+    if (
+        not recent_tests
+        and all_tests
+    ):
+        recent_tests = (
+            all_tests[:1]
+        )
+
     passed = 0
     failed = 0
     recorded_items = 0
 
-    defect_type_counts: Counter[str] = Counter()
-
-    component_test_ids: dict[str, set[str]] = (
-        defaultdict(set)
+    defect_type_counts: Counter[str] = (
+        Counter()
     )
 
-    component_latest: dict[str, str | None] = {}
+    component_test_ids: dict[
+        str,
+        set[str],
+    ] = defaultdict(set)
 
-    exact_test_ids: dict[str, set[str]] = (
-        defaultdict(set)
-    )
+    component_latest: dict[
+        str,
+        str | None,
+    ] = {}
 
-    exact_labels: dict[str, str] = {}
+    exact_test_ids: dict[
+        str,
+        set[str],
+    ] = defaultdict(set)
 
-    exact_latest: dict[str, str | None] = {}
+    exact_labels: dict[
+        str,
+        str,
+    ] = {}
 
-    mileage_points: list[dict[str, Any]] = []
+    exact_latest: dict[
+        str,
+        str | None,
+    ] = {}
 
-    notable_tests: list[dict[str, Any]] = []
+    mileage_points: list[
+        dict[str, Any]
+    ] = []
 
-    for index, test in enumerate(tests):
+    mot_history: list[
+        dict[str, Any]
+    ] = []
+
+    for index, test in enumerate(
+        recent_tests
+    ):
         result = (
             test.test_result
             or "UNKNOWN"
@@ -278,11 +375,21 @@ def build_vehicle_context(
             or f"unknown-{index}"
         )
 
-        components_seen: set[str] = set()
+        components_seen: set[str] = (
+            set()
+        )
 
-        descriptions_seen: set[str] = set()
+        descriptions_seen: set[str] = (
+            set()
+        )
 
-        compact_defects: list[dict[str, Any]] = []
+        full_recorded_items = [
+            _serialise_defect(
+                defect
+            )
+            for defect
+            in test.defects
+        ]
 
         for defect in test.defects:
             recorded_items += 1
@@ -317,7 +424,7 @@ def build_vehicle_context(
                     component
                 )
 
-                existing_date = (
+                previous_date = (
                     component_latest.get(
                         component
                     )
@@ -326,9 +433,9 @@ def build_vehicle_context(
                 if (
                     completed_at
                     and (
-                        existing_date is None
+                        previous_date is None
                         or completed_at
-                        > existing_date
+                        > previous_date
                     )
                 ):
                     component_latest[
@@ -360,7 +467,7 @@ def build_vehicle_context(
                     defect.text,
                 )
 
-                existing_date = (
+                previous_date = (
                     exact_latest.get(
                         normalised
                     )
@@ -369,22 +476,14 @@ def build_vehicle_context(
                 if (
                     completed_at
                     and (
-                        existing_date is None
+                        previous_date is None
                         or completed_at
-                        > existing_date
+                        > previous_date
                     )
                 ):
                     exact_latest[
                         normalised
                     ] = completed_at
-
-            if len(compact_defects) < 5:
-                compact_defects.append(
-                    {
-                        "type": defect_type,
-                        "text": defect.text[:220],
-                    }
-                )
 
         if (
             test.odometer_value
@@ -392,50 +491,60 @@ def build_vehicle_context(
         ):
             mileage_points.append(
                 {
-                    "date": completed_at,
-                    "value": test.odometer_value,
-                    "unit": test.odometer_unit,
+                    "date":
+                        completed_at,
+
+                    "value":
+                        test.odometer_value,
+
+                    "unit":
+                        test.odometer_unit,
                 }
             )
 
-        is_notable = (
-            result == "FAILED"
-            or len(
-                test.defects
-            ) > 0
+        mot_history.append(
+            {
+                "date":
+                    completed_at,
+
+                "result":
+                    result,
+
+                "expiry_date":
+                    _date_text(
+                        test.expiry_date
+                    ),
+
+                "mileage":
+                    test.odometer_value,
+
+                "mileage_unit":
+                    test.odometer_unit,
+
+                "recorded_item_count":
+                    len(
+                        full_recorded_items
+                    ),
+
+                "recorded_items":
+                    full_recorded_items,
+            }
         )
-
-        if (
-            is_notable
-            and len(
-                notable_tests
-            ) < 10
-        ):
-            notable_tests.append(
-                {
-                    "date": completed_at,
-                    "result": result,
-                    "mileage": (
-                        test.odometer_value
-                    ),
-                    "unit": (
-                        test.odometer_unit
-                    ),
-                    "items": (
-                        compact_defects
-                    ),
-                }
-            )
 
     recurring_components = [
         {
-            "label": component,
-            "test_count": len(test_ids),
-            "latest_date": (
+            "label":
+                component,
+
+            "test_count":
+                len(
+                    test_ids
+                ),
+
+            "latest_date":
                 component_latest.get(
                     component
-                )
-            ),
+                ),
         }
         for component, test_ids
         in component_test_ids.items()
@@ -444,40 +553,53 @@ def build_vehicle_context(
 
     recurring_components.sort(
         key=lambda item: (
-            -item["test_count"],
-            item["label"],
+            -item[
+                "test_count"
+            ],
+            item[
+                "label"
+            ],
         )
     )
 
-    repeated_descriptions = [
+    repeated_exact_items = [
         {
-            "description": (
+            "description":
                 exact_labels[
                     description
-                ][:220]
-            ),
-            "test_count": len(test_ids),
-            "latest_date": (
+                ],
+
+            "test_count":
+                len(
+                    test_ids
+                ),
+
+            "latest_date":
                 exact_latest.get(
                     description
-                )
-            ),
+                ),
         }
         for description, test_ids
         in exact_test_ids.items()
         if len(test_ids) >= 2
     ]
 
-    repeated_descriptions.sort(
+    repeated_exact_items.sort(
         key=lambda item: (
-            -item["test_count"],
-            item["description"],
+            -item[
+                "test_count"
+            ],
+            item[
+                "description"
+            ],
         )
     )
 
     mileage_points.sort(
-        key=lambda item: (
-            item["date"]
+        key=lambda point: (
+            point[
+                "date"
+            ]
             or ""
         )
     )
@@ -486,7 +608,9 @@ def build_vehicle_context(
 
     for index in range(
         1,
-        len(mileage_points),
+        len(
+            mileage_points
+        ),
     ):
         previous = (
             mileage_points[
@@ -501,24 +625,30 @@ def build_vehicle_context(
         )
 
         previous_unit = (
-            previous["unit"]
+            previous[
+                "unit"
+            ]
             or ""
         ).lower()
 
         current_unit = (
-            current["unit"]
+            current[
+                "unit"
+            ]
             or ""
         ).lower()
 
         if (
             previous_unit
             == current_unit
-            and current["value"]
-            < previous["value"]
+            and current[
+                "value"
+            ]
+            < previous[
+                "value"
+            ]
         ):
             mileage_decreases += 1
-
-    annual_distance: dict[str, Any] | None = None
 
     first_mileage = (
         mileage_points[0]
@@ -532,6 +662,11 @@ def build_vehicle_context(
         else None
     )
 
+    annual_distance: dict[
+        str,
+        Any,
+    ] | None = None
+
     if (
         first_mileage
         and latest_mileage
@@ -539,20 +674,29 @@ def build_vehicle_context(
         and latest_mileage["date"]
     ):
         first_unit = (
-            first_mileage["unit"]
+            first_mileage[
+                "unit"
+            ]
             or ""
         ).lower()
 
         latest_unit = (
-            latest_mileage["unit"]
+            latest_mileage[
+                "unit"
+            ]
             or ""
         ).lower()
 
         if (
             first_unit
-            and first_unit == latest_unit
-            and latest_mileage["value"]
-            >= first_mileage["value"]
+            and first_unit
+            == latest_unit
+            and latest_mileage[
+                "value"
+            ]
+            >= first_mileage[
+                "value"
+            ]
         ):
             try:
                 first_date = (
@@ -587,16 +731,17 @@ def build_vehicle_context(
                     )
 
                     annual_distance = {
-                        "estimate": round(
-                            distance
-                            / days
-                            * 365
-                        ),
-                        "unit": (
+                        "estimate":
+                            round(
+                                distance
+                                / days
+                                * 365
+                            ),
+
+                        "unit":
                             first_mileage[
                                 "unit"
-                            ]
-                        ),
+                            ],
                     }
 
             except (
@@ -644,110 +789,131 @@ def build_vehicle_context(
     ]
 
     context: dict[str, Any] = {
-        "analysis_date": (
+        "analysis_date":
             date.today()
-            .isoformat()
-        ),
+            .isoformat(),
+
+        "analysis_scope": {
+            "years":
+                AI_HISTORY_YEARS,
+
+            "cutoff_date":
+                _history_cutoff()
+                .isoformat(),
+
+            "total_mot_tests_available":
+                len(
+                    all_tests
+                ),
+
+            "mot_tests_analysed":
+                len(
+                    recent_tests
+                ),
+        },
 
         "vehicle": {
-            "registration": (
-                vehicle.registration
-            ),
-            "make": (
-                vehicle.make
-            ),
-            "model": (
-                vehicle.model
-            ),
-            "fuel_type": (
-                vehicle.fuel_type
-            ),
-            "engine_size": (
-                vehicle.engine_size
-            ),
-            "year": (
-                vehicle.year
-            ),
+            "registration":
+                vehicle.registration,
+
+            "make":
+                vehicle.make,
+
+            "model":
+                vehicle.model,
+
+            "fuel_type":
+                vehicle.fuel_type,
+
+            "engine_size":
+                vehicle.engine_size,
+
+            "colour":
+                vehicle.colour,
+
+            "year":
+                vehicle.year,
         },
 
         "mot_analysis": {
             "statistics": {
-                "tests": len(tests),
-                "passed": passed,
-                "failed": failed,
-                "recorded_items": (
-                    recorded_items
-                ),
-                "dangerous": (
+                "tests":
+                    len(
+                        recent_tests
+                    ),
+
+                "passed":
+                    passed,
+
+                "failed":
+                    failed,
+
+                "recorded_items":
+                    recorded_items,
+
+                "dangerous":
                     defect_type_counts[
                         "DANGEROUS"
-                    ]
-                ),
-                "major": (
+                    ],
+
+                "major":
                     defect_type_counts[
                         "MAJOR"
-                    ]
-                ),
-                "minor": (
+                    ],
+
+                "minor":
                     defect_type_counts[
                         "MINOR"
-                    ]
-                ),
-                "advisory": (
+                    ],
+
+                "advisory":
                     defect_type_counts[
                         "ADVISORY"
-                    ]
-                ),
-                "prs": (
+                    ],
+
+                "prs":
                     defect_type_counts[
                         "PRS"
-                    ]
-                ),
-                "mileage_points": (
+                    ],
+
+                "mileage_points":
                     len(
                         mileage_points
-                    )
-                ),
-                "mileage_decreases": (
-                    mileage_decreases
-                ),
+                    ),
+
+                "mileage_decreases":
+                    mileage_decreases,
             },
 
-            "recurring_components": (
+            "recurring_components":
                 recurring_components[
-                    :6
-                ]
-            ),
+                    :8
+                ],
 
-            "repeated_exact_items": (
-                repeated_descriptions[
-                    :5
-                ]
-            ),
+            "repeated_exact_items":
+                repeated_exact_items[
+                    :8
+                ],
 
             "mileage": {
-                "first_reading": (
-                    first_mileage
-                ),
-                "latest_reading": (
-                    latest_mileage
-                ),
-                "annual_distance_estimate": (
-                    annual_distance
-                ),
-                "recorded_decreases": (
-                    mileage_decreases
-                ),
-                "recent_points": (
-                    mileage_points[
-                        -8:
-                    ]
-                ),
+                "first_reading":
+                    first_mileage,
+
+                "latest_reading":
+                    latest_mileage,
+
+                "annual_distance_estimate":
+                    annual_distance,
+
+                "recorded_decreases":
+                    mileage_decreases,
+
+                "points":
+                    mileage_points,
             },
 
-            "notable_tests": (
-                notable_tests
-            ),
+            "mot_history":
+                mot_history,
         },
     }
 
@@ -762,17 +928,14 @@ def build_vehicle_context(
                 "These records were entered "
                 "manually by the user and may "
                 "be partial or incomplete. "
-                "They must only be treated as "
-                "supplementary context."
+                "They are supplementary only."
             ),
 
-            "service_records": (
-                service_records
-            ),
+            "service_records":
+                service_records,
 
-            "maintenance_items": (
-                maintenance_items
-            ),
+            "maintenance_items":
+                maintenance_items,
         }
 
     return context
@@ -807,13 +970,24 @@ def build_recurring_items(
 
     return [
         AiRecurringItem(
-            label=item["label"],
-            count=item["test_count"],
+            label=(
+                item[
+                    "label"
+                ]
+            ),
+
+            count=(
+                item[
+                    "test_count"
+                ]
+            ),
+
             latest_date=(
                 item[
                     "latest_date"
                 ]
             ),
         )
-        for item in recurring[:6]
+        for item
+        in recurring[:6]
     ]

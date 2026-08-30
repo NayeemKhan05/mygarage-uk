@@ -3,18 +3,10 @@ import os
 import socket
 import subprocess
 
-from typing import Protocol, TypeVar
-
-from pydantic import BaseModel
+from typing import Protocol
 
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
-
-
-T = TypeVar(
-    "T",
-    bound=BaseModel,
-)
 
 
 class AiProviderError(Exception):
@@ -47,13 +39,13 @@ class AiProvider(Protocol):
     ) -> tuple[bool, str]:
         ...
 
-    def generate_structured(
+    def generate_text(
         self,
         *,
         system_prompt: str,
         user_prompt: str,
-        response_model: type[T],
-    ) -> T:
+        num_predict: int,
+    ) -> str:
         ...
 
 
@@ -124,7 +116,7 @@ class OllamaProvider:
         self.timeout_seconds = float(
             os.getenv(
                 "OLLAMA_TIMEOUT_SECONDS",
-                "240",
+                "120",
             )
         )
 
@@ -142,10 +134,10 @@ class OllamaProvider:
             )
         )
 
-        self.num_predict = int(
+        self.seed = int(
             os.getenv(
-                "OLLAMA_NUM_PREDICT",
-                "420",
+                "OLLAMA_SEED",
+                "42",
             )
         )
 
@@ -157,13 +149,6 @@ class OllamaProvider:
                     "/"
                 )
             )
-
-        self.base_urls.extend(
-            [
-                "http://127.0.0.1:11434",
-                "http://localhost:11434",
-            ]
-        )
 
         windows_host = (
             _get_wsl_windows_host()
@@ -178,15 +163,20 @@ class OllamaProvider:
                 )
             )
 
+        self.base_urls.extend(
+            [
+                "http://127.0.0.1:11434",
+                "http://localhost:11434",
+            ]
+        )
+
         self.base_urls = list(
             dict.fromkeys(
                 self.base_urls
             )
         )
 
-        self.active_base_url: (
-            str | None
-        ) = None
+        self.active_base_url: str | None = None
 
     def _request_url(
         self,
@@ -254,6 +244,17 @@ class OllamaProvider:
                     exc
                 )
 
+            if (
+                exc.code == 404
+                and "model"
+                in message.lower()
+            ):
+                raise (
+                    AiModelMissingError(
+                        message
+                    )
+                ) from exc
+
             raise AiProviderError(
                 message
             ) from exc
@@ -262,12 +263,12 @@ class OllamaProvider:
             TimeoutError,
             socket.timeout,
         ) as exc:
-            raise AiProviderUnavailableError(
-                (
-                    "Local AI generation timed "
-                    "out. Ollama is running, "
-                    "but the model took too "
-                    "long to respond."
+            raise (
+                AiProviderUnavailableError(
+                    (
+                        "Local AI generation "
+                        "timed out."
+                    )
                 )
             ) from exc
 
@@ -283,10 +284,7 @@ class OllamaProvider:
                     AiProviderUnavailableError(
                         (
                             "Local AI generation "
-                            "timed out. Ollama is "
-                            "running, but the "
-                            "model took too long "
-                            "to respond."
+                            "timed out."
                         )
                     )
                 ) from exc
@@ -307,10 +305,12 @@ class OllamaProvider:
             )
 
         except json.JSONDecodeError as exc:
-            raise AiProviderError(
-                (
-                    "Ollama returned "
-                    "invalid JSON."
+            raise (
+                AiProviderError(
+                    (
+                        "Ollama returned "
+                        "invalid JSON."
+                    )
                 )
             ) from exc
 
@@ -327,7 +327,8 @@ class OllamaProvider:
                         self.active_base_url,
                         "/api/tags",
                         timeout=(
-                            self.status_timeout_seconds
+                            self
+                            .status_timeout_seconds
                         ),
                     )
                 )
@@ -338,9 +339,7 @@ class OllamaProvider:
                 )
 
             except AiProviderError:
-                self.active_base_url = (
-                    None
-                )
+                self.active_base_url = None
 
         for base_url in self.base_urls:
             try:
@@ -349,7 +348,8 @@ class OllamaProvider:
                         base_url,
                         "/api/tags",
                         timeout=(
-                            self.status_timeout_seconds
+                            self
+                            .status_timeout_seconds
                         ),
                     )
                 )
@@ -371,6 +371,26 @@ class OllamaProvider:
             None,
         )
 
+    def _ensure_connection(
+        self,
+    ) -> None:
+        if self.active_base_url:
+            return
+
+        base_url, _ = (
+            self._find_ollama()
+        )
+
+        if not base_url:
+            raise (
+                AiProviderUnavailableError(
+                    (
+                        "Ollama is not reachable "
+                        "from MyGarage."
+                    )
+                )
+            )
+
     def _request(
         self,
         path: str,
@@ -378,29 +398,14 @@ class OllamaProvider:
         method: str = "GET",
         payload: dict | None = None,
     ) -> dict:
-        if not self.active_base_url:
-            base_url, _ = (
-                self._find_ollama()
-            )
-
-            if not base_url:
-                raise (
-                    AiProviderUnavailableError(
-                        (
-                            "Ollama is not "
-                            "reachable from "
-                            "MyGarage."
-                        )
-                    )
-                )
+        self._ensure_connection()
 
         if self.active_base_url is None:
             raise (
                 AiProviderUnavailableError(
                     (
-                        "Ollama is not "
-                        "reachable from "
-                        "MyGarage."
+                        "Ollama is not reachable "
+                        "from MyGarage."
                     )
                 )
             )
@@ -414,10 +419,7 @@ class OllamaProvider:
 
     def check_status(
         self,
-    ) -> tuple[
-        bool,
-        str,
-    ]:
+    ) -> tuple[bool, str]:
         base_url, payload = (
             self._find_ollama()
         )
@@ -468,34 +470,13 @@ class OllamaProvider:
             ),
         )
 
-    def generate_structured(
+    def generate_text(
         self,
         *,
         system_prompt: str,
         user_prompt: str,
-        response_model: type[T],
-    ) -> T:
-        available, message = (
-            self.check_status()
-        )
-
-        if not available:
-            if (
-                "not installed"
-                in message
-            ):
-                raise (
-                    AiModelMissingError(
-                        message
-                    )
-                )
-
-            raise (
-                AiProviderUnavailableError(
-                    message
-                )
-            )
-
+        num_predict: int,
+    ) -> str:
         payload = (
             self._request(
                 "/api/chat",
@@ -508,12 +489,14 @@ class OllamaProvider:
                         {
                             "role":
                                 "system",
+
                             "content":
                                 system_prompt,
                         },
                         {
                             "role":
                                 "user",
+
                             "content":
                                 user_prompt,
                         },
@@ -522,63 +505,50 @@ class OllamaProvider:
                     "stream":
                         False,
 
-                    "format":
-                        response_model
-                        .model_json_schema(),
-
                     "keep_alive":
                         "15m",
 
                     "options": {
                         "temperature":
-                            0.1,
+                            0,
+
+                        "seed":
+                            self.seed,
 
                         "num_ctx":
                             self.num_ctx,
 
                         "num_predict":
-                            self.num_predict,
+                            num_predict,
+
+                        "repeat_penalty":
+                            1.08,
                     },
                 },
             )
         )
 
-        try:
-            message = (
-                payload[
-                    "message"
-                ]
+        content = (
+            payload
+            .get(
+                "message",
+                {},
             )
-
-            content = (
-                message[
-                    "content"
-                ]
+            .get(
+                "content",
+                "",
             )
+            .strip()
+        )
 
-            parsed = json.loads(
-                content
-            )
-
-            return (
-                response_model
-                .model_validate(
-                    parsed
-                )
-            )
-
-        except (
-            KeyError,
-            TypeError,
-            json.JSONDecodeError,
-            ValueError,
-        ) as exc:
+        if not content:
             raise (
                 AiGenerationError(
                     (
-                        "The local AI "
-                        "returned an invalid "
-                        "structured response."
+                        "The local AI returned "
+                        "an empty response."
                     )
                 )
-            ) from exc
+            )
+
+        return content
