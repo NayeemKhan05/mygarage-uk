@@ -55,25 +55,25 @@ def _age_weight(
 def _rating_band(
     score: int,
 ) -> tuple[str, str]:
-    if score >= 95:
+    if score >= 90:
         return (
             "Excellent",
             "excellent",
         )
 
-    if score >= 85:
+    if score >= 75:
         return (
             "Good",
             "good",
         )
 
-    if score >= 72:
+    if score >= 60:
         return (
             "Fair",
             "fair",
         )
 
-    if score >= 55:
+    if score >= 40:
         return (
             "Needs attention",
             "attention",
@@ -89,7 +89,9 @@ def _build_explanation(
     *,
     score: int,
     statistics: dict[str, Any],
-    recurring_components: list[dict[str, Any]],
+    recurring_components: list[
+        dict[str, Any]
+    ],
 ) -> str:
     dangerous = (
         statistics[
@@ -115,34 +117,36 @@ def _build_explanation(
         ]
     )
 
-    if score >= 95:
+    if score >= 90:
         base = (
-            "The recent MOT history is very strong, "
+            "The recent MOT history is very positive, "
             "with few significant recorded concerns."
         )
 
-    elif score >= 85:
+    elif score >= 75:
         base = (
             "The recent MOT history is generally positive, "
-            "with only limited issues affecting the rating."
+            "although some recorded issues are worth reviewing."
         )
 
-    elif score >= 72:
+    elif score >= 60:
         base = (
-            "The recent MOT history is mixed, with some "
-            "issues worth reviewing more closely."
+            "The recent MOT history is mixed, with several "
+            "recorded issues worth reviewing more closely."
         )
 
-    elif score >= 55:
+    elif score >= 40:
         base = (
-            "The recent MOT history contains several notable "
-            "or repeated issues that deserve closer attention."
+            "The recent MOT history contains a number of "
+            "significant or repeated issues that deserve "
+            "closer attention."
         )
 
     else:
         base = (
-            "The recent MOT history contains significant or "
-            "repeated serious defects that should be reviewed carefully."
+            "The recent MOT history contains substantial "
+            "or repeated serious concerns that should be "
+            "reviewed carefully."
         )
 
     if dangerous > 0:
@@ -150,34 +154,36 @@ def _build_explanation(
             f"{base} The record includes "
             f"{dangerous} dangerous "
             f"{'defect' if dangerous == 1 else 'defects'}, "
-            "which weighs heavily in the rating."
+            "which has a significant effect on the rating."
         )
 
     if major >= 2:
         return (
             f"{base} The record includes "
-            f"{major} major defects across the analysis period."
+            f"{major} major defects during the "
+            "analysis period."
         )
 
     if advisory >= 10:
         return (
-            f"{base} A relatively high number of advisories "
-            "has also been recorded across recent MOTs."
+            f"{base} A relatively high number of "
+            "advisories has also been recorded "
+            "across recent MOTs."
         )
 
     if len(
         recurring_components
     ) >= 2:
         return (
-            f"{base} Several component areas have appeared "
-            "on more than one recent MOT."
+            f"{base} Several component areas have "
+            "appeared on more than one recent MOT."
         )
 
     if failed > 0:
         return (
-            f"{base} Failed MOTs are considered, but a failure "
-            "on its own is weighted much less heavily than major "
-            "or dangerous defects."
+            f"{base} Failed MOTs are considered, "
+            "but a failure on its own has much less "
+            "impact than major or dangerous defects."
         )
 
     return base
@@ -273,6 +279,8 @@ def build_vehicle_rating(
             .upper()
         )
 
+        # A failed MOT itself is only a small penalty.
+        # The recorded defect severity matters much more.
         if result == "FAILED":
             if has_serious_defect:
                 score -= (
@@ -317,6 +325,8 @@ def build_vehicle_rating(
                     * weight
                 )
 
+    # Repeated component areas matter, but should not
+    # overwhelm the actual severity of the MOT defects.
     recurring_penalty = 0.0
 
     for item in recurring_components:
@@ -341,6 +351,8 @@ def build_vehicle_rating(
         8.0,
     )
 
+    # Mileage decreases are worth flagging, but do not
+    # automatically imply anything improper.
     mileage_decreases = int(
         statistics[
             "mileage_decreases"
@@ -353,6 +365,7 @@ def build_vehicle_rating(
         8.0,
     )
 
+    # A completely clean latest MOT is mildly positive.
     if history:
         latest = history[0]
 

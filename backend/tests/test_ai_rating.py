@@ -9,6 +9,7 @@ from app.services.ai_context import (
     build_vehicle_context,
 )
 from app.services.ai_rating import (
+    _rating_band,
     build_vehicle_rating,
 )
 
@@ -21,6 +22,78 @@ def recent_date(
         - timedelta(
             days=days_ago
         )
+    )
+
+
+def test_rating_bands_are_user_friendly():
+    assert (
+        _rating_band(
+            100
+        )[0]
+        == "Excellent"
+    )
+
+    assert (
+        _rating_band(
+            90
+        )[0]
+        == "Excellent"
+    )
+
+    assert (
+        _rating_band(
+            89
+        )[0]
+        == "Good"
+    )
+
+    assert (
+        _rating_band(
+            84
+        )[0]
+        == "Good"
+    )
+
+    assert (
+        _rating_band(
+            75
+        )[0]
+        == "Good"
+    )
+
+    assert (
+        _rating_band(
+            74
+        )[0]
+        == "Fair"
+    )
+
+    assert (
+        _rating_band(
+            60
+        )[0]
+        == "Fair"
+    )
+
+    assert (
+        _rating_band(
+            59
+        )[0]
+        == "Needs attention"
+    )
+
+    assert (
+        _rating_band(
+            40
+        )[0]
+        == "Needs attention"
+    )
+
+    assert (
+        _rating_band(
+            39
+        )[0]
+        == "Concerning"
     )
 
 
@@ -93,6 +166,11 @@ def test_minor_failure_does_not_destroy_rating():
         >= 90
     )
 
+    assert (
+        rating.label
+        == "Excellent"
+    )
+
 
 def test_many_recent_advisories_reduce_rating():
     advisories = [
@@ -141,7 +219,17 @@ def test_many_recent_advisories_reduce_rating():
 
     assert (
         rating.score
-        < 85
+        < 90
+    )
+
+    assert (
+        rating.label
+        in {
+            "Good",
+            "Fair",
+            "Needs attention",
+            "Concerning",
+        }
     )
 
 
@@ -189,7 +277,7 @@ def test_dangerous_defects_have_large_effect():
 
     assert (
         rating.score
-        < 80
+        < 75
     )
 
     assert (
@@ -259,7 +347,7 @@ def test_clean_recent_history_rates_highly():
 
     assert (
         rating.score
-        >= 95
+        >= 90
     )
 
     assert (
