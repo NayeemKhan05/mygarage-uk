@@ -3,9 +3,7 @@ import re
 from datetime import date, datetime
 from typing import Any
 
-from app.schemas.ai import (
-    AiVehicleRating,
-)
+from app.schemas.ai import AiVehicleRating
 
 
 SEVERITY_PENALTIES = {
@@ -26,9 +24,7 @@ def _parse_date(
     try:
         return (
             datetime
-            .fromisoformat(
-                value
-            )
+            .fromisoformat(value)
             .date()
         )
 
@@ -45,13 +41,11 @@ def _normalise_issue_text(
         .strip()
     )
 
-    cleaned = re.sub(
+    return re.sub(
         r"\s+",
         " ",
         cleaned,
     )
-
-    return cleaned
 
 
 def _age_weight(
@@ -117,10 +111,8 @@ def _rating_band(
 def _test_mileage(
     test: dict[str, Any],
 ) -> int | None:
-    value = (
-        test.get(
-            "mileage"
-        )
+    value = test.get(
+        "mileage"
     )
 
     if isinstance(
@@ -152,22 +144,24 @@ def _mileages_are_close(
 
 
 def _find_resolving_pass(
-    history: list[
-        dict[str, Any]
-    ],
+    history: list[dict[str, Any]],
     failed_index: int,
 ) -> int | None:
-    failed_test = (
-        history[
-            failed_index
-        ]
-    )
+    """
+    Find a passing retest within 30 days of a failed MOT.
 
-    failed_date = (
-        _parse_date(
-            failed_test.get(
-                "date"
-            )
+    We deliberately search the whole history rather than relying on
+    list position. DVSA fail/retest records can occur on the same day,
+    and tests with effectively identical timestamps should not depend
+    on their ordering in the input data.
+    """
+    failed_test = history[
+        failed_index
+    ]
+
+    failed_date = _parse_date(
+        failed_test.get(
+            "date"
         )
     )
 
@@ -180,23 +174,17 @@ def _find_resolving_pass(
         )
     )
 
-    # History is stored newest first.
-    # Walk towards the newer tests, beginning
-    # with the test immediately after the failure.
-    for index in range(
-        failed_index - 1,
-        -1,
-        -1,
+    matching_days: list[int] = []
+
+    for index, candidate in enumerate(
+        history
     ):
-        newer_test = (
-            history[
-                index
-            ]
-        )
+        if index == failed_index:
+            continue
 
         result = (
             str(
-                newer_test.get(
+                candidate.get(
                     "result",
                     "UNKNOWN",
                 )
@@ -207,43 +195,50 @@ def _find_resolving_pass(
         if result != "PASSED":
             continue
 
-        newer_date = (
+        candidate_date = (
             _parse_date(
-                newer_test.get(
+                candidate.get(
                     "date"
                 )
             )
         )
 
-        if newer_date is None:
+        if candidate_date is None:
             continue
 
         days_between = (
-            newer_date
+            candidate_date
             - failed_date
         ).days
 
-        if days_between < 0:
+        if (
+            days_between < 0
+            or days_between > 30
+        ):
             continue
 
-        if days_between > 30:
-            break
-
-        newer_mileage = (
+        candidate_mileage = (
             _test_mileage(
-                newer_test
+                candidate
             )
         )
 
         if not _mileages_are_close(
             failed_mileage,
-            newer_mileage,
+            candidate_mileage,
         ):
             continue
 
-        return days_between
+        matching_days.append(
+            days_between
+        )
 
-    return None
+    if not matching_days:
+        return None
+
+    return min(
+        matching_days
+    )
 
 
 def _resolution_multiplier(
@@ -279,6 +274,10 @@ def _is_duplicate_issue(
         ],
     ],
 ) -> bool:
+    """
+    Avoid charging twice for the same issue where a failed MOT and
+    nearby retest repeat identical wording at effectively the same mileage.
+    """
     normalised = (
         _normalise_issue_text(
             text
@@ -298,8 +297,7 @@ def _is_duplicate_issue(
     ) in previous_occurrences:
         if (
             test_date is not None
-            and previous_date
-            is not None
+            and previous_date is not None
         ):
             days_between = abs(
                 (
@@ -386,15 +384,103 @@ def _recurring_penalty(
     )
 
 
+def _effective_latest_test(
+    history: list[
+        dict[str, Any]
+    ],
+) -> dict[str, Any] | None:
+    """
+    Return the MOT that best represents the vehicle's current status.
+
+    If multiple tests occur on the latest calendar day, prefer a pass.
+    That handles same-day fail/retest pairs correctly even when their
+    source timestamps are effectively identical.
+    """
+    if not history:
+        return None
+
+    dated_tests: list[
+        tuple[
+            date,
+            dict[str, Any],
+        ]
+    ] = []
+
+    for test in history:
+        test_date = (
+            _parse_date(
+                test.get(
+                    "date"
+                )
+            )
+        )
+
+        if test_date is not None:
+            dated_tests.append(
+                (
+                    test_date,
+                    test,
+                )
+            )
+
+    if not dated_tests:
+        return history[0]
+
+    latest_date = max(
+        test_date
+        for test_date, _
+        in dated_tests
+    )
+
+    latest_day_tests = [
+        test
+        for test_date, test
+        in dated_tests
+        if test_date == latest_date
+    ]
+
+    passing_tests = [
+        test
+        for test in latest_day_tests
+        if (
+            str(
+                test.get(
+                    "result",
+                    "UNKNOWN",
+                )
+            )
+            .upper()
+            == "PASSED"
+        )
+    ]
+
+    if passing_tests:
+        return min(
+            passing_tests,
+            key=lambda test: len(
+                test.get(
+                    "recorded_items",
+                    [],
+                )
+            ),
+        )
+
+    return latest_day_tests[0]
+
+
 def _latest_test_bonus(
     history: list[
         dict[str, Any]
     ],
 ) -> float:
-    if not history:
-        return 0.0
+    latest = (
+        _effective_latest_test(
+            history
+        )
+    )
 
-    latest = history[0]
+    if latest is None:
+        return 0.0
 
     result = (
         str(
@@ -409,15 +495,13 @@ def _latest_test_bonus(
     if result != "PASSED":
         return 0.0
 
-    items = (
-        latest.get(
-            "recorded_items",
-            [],
-        )
+    items = latest.get(
+        "recorded_items",
+        [],
     )
 
     if not items:
-        return 2.0
+        return 1.5
 
     serious_items = [
         item
@@ -441,7 +525,7 @@ def _latest_test_bonus(
         return 0.0
 
     if len(items) <= 2:
-        return 0.75
+        return 0.5
 
     return 0.0
 
@@ -497,7 +581,7 @@ def _build_explanation(
             (
                 "The latest MOT passed with no recorded "
                 "defects or advisories, which carries "
-                "significant weight in the rating."
+                "additional weight in the rating."
             )
         )
 
@@ -524,9 +608,9 @@ def _build_explanation(
     elif resolved_serious_count > 0:
         details.append(
             (
-                "Older serious defects that were followed "
-                "by a prompt passing retest have a much "
-                "smaller effect than unresolved recent defects."
+                "Older serious defects followed by a prompt "
+                "passing retest have a much smaller effect "
+                "than unresolved recent defects."
             )
         )
 
@@ -646,7 +730,7 @@ def build_vehicle_rating(
             .upper()
         )
 
-        days_to_pass = None
+        days_to_pass: int | None = None
 
         if result == "FAILED":
             days_to_pass = (
@@ -656,6 +740,8 @@ def build_vehicle_rating(
                 )
             )
 
+            # The fact that a test failed matters, but the actual
+            # defects carry most of the scoring weight.
             if days_to_pass is None:
                 score -= (
                     1.5
@@ -674,11 +760,9 @@ def build_vehicle_rating(
             )
         )
 
-        items = (
-            test.get(
-                "recorded_items",
-                [],
-            )
+        items = test.get(
+            "recorded_items",
+            [],
         )
 
         dangerous_on_test = 0
@@ -695,21 +779,16 @@ def build_vehicle_rating(
                 .upper()
             )
 
-            item_text = (
-                str(
-                    item.get(
-                        "text",
-                        "",
-                    )
+            item_text = str(
+                item.get(
+                    "text",
+                    "",
                 )
             )
 
             if not item_text:
                 continue
 
-            # A failed MOT and its immediate retest
-            # often repeat the same advisory wording.
-            # Count that issue once rather than twice.
             if _is_duplicate_issue(
                 text=item_text,
                 test_date=test_date,
@@ -730,8 +809,16 @@ def build_vehicle_rating(
                 * age_weight
             )
 
+            # Only serious defects are strongly discounted by
+            # a prompt passing retest. Advisories can remain on
+            # a passing retest, so they still count once normally.
             if (
-                result == "FAILED"
+                item_type
+                in {
+                    "DANGEROUS",
+                    "MAJOR",
+                }
+                and result == "FAILED"
                 and days_to_pass
                 is not None
             ):
@@ -739,38 +826,34 @@ def build_vehicle_rating(
                     resolution_multiplier
                 )
 
-                if item_type in {
-                    "DANGEROUS",
-                    "MAJOR",
-                }:
-                    resolved_serious_count += 1
+                resolved_serious_count += 1
 
             elif (
-                result == "FAILED"
+                item_type
+                == "DANGEROUS"
+                and result == "FAILED"
                 and days_to_pass
                 is None
             ):
-                if (
-                    item_type
-                    == "DANGEROUS"
-                ):
-                    unresolved_dangerous_count += 1
-                    dangerous_on_test += 1
+                unresolved_dangerous_count += 1
+                dangerous_on_test += 1
 
-                elif (
-                    item_type
-                    == "MAJOR"
-                ):
-                    unresolved_major_count += 1
-                    major_on_test += 1
+            elif (
+                item_type
+                == "MAJOR"
+                and result == "FAILED"
+                and days_to_pass
+                is None
+            ):
+                unresolved_major_count += 1
+                major_on_test += 1
 
             score -= (
                 effective_penalty
             )
 
-        # An unresolved serious failed MOT deserves
-        # an additional penalty because there is no
-        # nearby passing retest showing correction.
+        # An unresolved serious failure deserves an extra
+        # penalty because there is no nearby successful retest.
         if (
             result == "FAILED"
             and days_to_pass
@@ -832,24 +915,29 @@ def build_vehicle_rating(
         )
     )
 
-    latest_clean = False
+    latest = (
+        _effective_latest_test(
+            history
+        )
+    )
 
-    if history:
-        latest = history[0]
-
-        latest_clean = (
+    latest_clean = (
+        latest is not None
+        and (
             str(
                 latest.get(
                     "result",
                     "",
                 )
-            ).upper()
-            == "PASSED"
-            and not latest.get(
-                "recorded_items",
-                [],
             )
+            .upper()
+            == "PASSED"
         )
+        and not latest.get(
+            "recorded_items",
+            [],
+        )
+    )
 
     explanation = (
         _build_explanation(
