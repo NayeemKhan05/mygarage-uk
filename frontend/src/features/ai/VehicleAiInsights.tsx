@@ -24,8 +24,7 @@ import styles from "./VehicleAiInsights.module.css";
 
 
 interface VehicleAiInsightsProps {
-  snapshot:
-    AiVehicleSnapshot;
+  snapshot: AiVehicleSnapshot;
 }
 
 
@@ -36,9 +35,9 @@ export default function VehicleAiInsights({
     insights,
     setInsights,
   ] =
-    useState<
-      AiVehicleInsights | null
-    >(null);
+    useState<AiVehicleInsights | null>(
+      null,
+    );
 
   const [
     loading,
@@ -50,9 +49,9 @@ export default function VehicleAiInsights({
     error,
     setError,
   ] =
-    useState<
-      string | null
-    >(null);
+    useState<string | null>(
+      null,
+    );
 
   const [
     question,
@@ -70,20 +69,26 @@ export default function VehicleAiInsights({
     answer,
     setAnswer,
   ] =
-    useState<
-      AiQuestionResponse | null
-    >(null);
+    useState<AiQuestionResponse | null>(
+      null,
+    );
 
   const [
-    showReadyNotification,
-    setShowReadyNotification,
+    notificationDismissed,
+    setNotificationDismissed,
+  ] =
+    useState(true);
+
+  const [
+    analysisJustCompleted,
+    setAnalysisJustCompleted,
   ] =
     useState(false);
 
   const insightsRef =
-    useRef<
-      HTMLElement | null
-    >(null);
+    useRef<HTMLElement | null>(
+      null,
+    );
 
 
   const snapshotKey =
@@ -113,23 +118,27 @@ export default function VehicleAiInsights({
 
   useEffect(() => {
     setInsights(
-      null
+      null,
     );
 
     setError(
-      null
+      null,
     );
 
     setQuestion(
-      ""
+      "",
     );
 
     setAnswer(
-      null
+      null,
     );
 
-    setShowReadyNotification(
-      false
+    setNotificationDismissed(
+      true,
+    );
+
+    setAnalysisJustCompleted(
+      false,
     );
 
   }, [
@@ -139,7 +148,9 @@ export default function VehicleAiInsights({
 
   useEffect(() => {
     if (
-      !showReadyNotification
+      loading
+      || !analysisJustCompleted
+      || notificationDismissed
     ) {
       return;
     }
@@ -147,39 +158,49 @@ export default function VehicleAiInsights({
     const timeout =
       window.setTimeout(
         () => {
-          setShowReadyNotification(
-            false
+          setNotificationDismissed(
+            true,
+          );
+
+          setAnalysisJustCompleted(
+            false,
           );
         },
-        12000,
+        15000,
       );
 
     return () => {
       window.clearTimeout(
-        timeout
+        timeout,
       );
     };
 
   }, [
-    showReadyNotification,
+    loading,
+    analysisJustCompleted,
+    notificationDismissed,
   ]);
 
 
   async function handleGenerate() {
     setLoading(
-      true
+      true,
     );
 
     setError(
-      null
+      null,
     );
 
     setAnswer(
-      null
+      null,
     );
 
-    setShowReadyNotification(
-      false
+    setAnalysisJustCompleted(
+      false,
+    );
+
+    setNotificationDismissed(
+      false,
     );
 
     try {
@@ -189,16 +210,32 @@ export default function VehicleAiInsights({
         );
 
       setInsights(
-        result
+        result,
       );
 
-      setShowReadyNotification(
-        true
+      /*
+       * Show the completed notification even if
+       * the user hid the loading notification.
+       */
+      setNotificationDismissed(
+        false,
+      );
+
+      setAnalysisJustCompleted(
+        true,
       );
 
     } catch (
       caughtError
     ) {
+      setNotificationDismissed(
+        true,
+      );
+
+      setAnalysisJustCompleted(
+        false,
+      );
+
       if (
         caughtError
         instanceof AiApiError
@@ -219,7 +256,7 @@ export default function VehicleAiInsights({
 
     } finally {
       setLoading(
-        false
+        false,
       );
     }
   }
@@ -227,9 +264,7 @@ export default function VehicleAiInsights({
 
   async function handleQuestion(
     event:
-      FormEvent<
-        HTMLFormElement
-      >,
+      FormEvent<HTMLFormElement>,
   ) {
     event.preventDefault();
 
@@ -241,15 +276,15 @@ export default function VehicleAiInsights({
     }
 
     setAsking(
-      true
+      true,
     );
 
     setError(
-      null
+      null,
     );
 
     setAnswer(
-      null
+      null,
     );
 
     try {
@@ -260,7 +295,7 @@ export default function VehicleAiInsights({
         );
 
       setAnswer(
-        result
+        result,
       );
 
     } catch (
@@ -286,26 +321,34 @@ export default function VehicleAiInsights({
 
     } finally {
       setAsking(
-        false
+        false,
       );
     }
   }
 
 
   function handleViewInsights() {
-    setShowReadyNotification(
-      false
+    setNotificationDismissed(
+      true,
+    );
+
+    setAnalysisJustCompleted(
+      false,
     );
 
     insightsRef
       .current
       ?.scrollIntoView({
-        behavior:
-          "smooth",
-
-        block:
-          "start",
+        behavior: "smooth",
+        block: "start",
       });
+  }
+
+
+  function handleDismissNotification() {
+    setNotificationDismissed(
+      true,
+    );
   }
 
 
@@ -1033,50 +1076,125 @@ export default function VehicleAiInsights({
         )}
       </section>
 
-      {showReadyNotification
-        && insights && (
-          <button
-            className={
-              styles.readyToast
-            }
-            type="button"
-            onClick={
-              handleViewInsights
-            }
+      {!notificationDismissed
+        && loading && (
+          <div
+            className={`${styles.aiToast} ${styles.processingToast}`}
+            role="status"
             aria-live="polite"
           >
             <span
               className={
-                styles.readyIcon
+                styles.toastSpinner
               }
               aria-hidden="true"
-            >
-              ✓
-            </span>
+            />
 
-            <span
+            <div
               className={
-                styles.readyContent
+                styles.toastContent
               }
             >
               <strong>
-                Your vehicle analysis is ready
+                Analysing recent MOTs
               </strong>
 
               <span>
-                View the latest rating and
-                insights.
+                You can keep browsing.
+                We&apos;ll let you know
+                when it&apos;s ready.
               </span>
-            </span>
+            </div>
 
-            <span
+            <button
               className={
-                styles.readyAction
+                styles.toastClose
+              }
+              type="button"
+              aria-label={
+                "Dismiss analysis notification"
+              }
+              title={
+                "Dismiss"
+              }
+              onClick={
+                handleDismissNotification
               }
             >
-              View
-            </span>
-          </button>
+              ×
+            </button>
+          </div>
+        )}
+
+      {!notificationDismissed
+        && !loading
+        && analysisJustCompleted
+        && insights && (
+          <div
+            className={`${styles.aiToast} ${styles.completedToast}`}
+            role="status"
+            aria-live="polite"
+          >
+            <button
+              className={
+                styles.toastOpen
+              }
+              type="button"
+              onClick={
+                handleViewInsights
+              }
+            >
+              <span
+                className={
+                  styles.readyIcon
+                }
+                aria-hidden="true"
+              >
+                ✓
+              </span>
+
+              <span
+                className={
+                  styles.toastContent
+                }
+              >
+                <strong>
+                  Vehicle analysis ready
+                </strong>
+
+                <span>
+                  View the latest rating
+                  and insights.
+                </span>
+              </span>
+
+              <span
+                className={
+                  styles.readyAction
+                }
+              >
+                View
+              </span>
+            </button>
+
+            <button
+              className={
+                styles.toastClose
+              }
+              type="button"
+              aria-label={
+                "Dismiss notification"
+              }
+              title={
+                "Dismiss"
+              }
+              onClick={
+                handleDismissNotification
+              }
+            >
+              ×
+            </button>
+          </div>
         )}
     </>
   );

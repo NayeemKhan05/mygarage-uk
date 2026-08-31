@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 
 import {
@@ -64,16 +65,22 @@ export default function SiteHeader({
     <header className="site-header">
       <div className="header-inner">
         <Link
-          className="brand"
+          className={
+            styles.brandLink
+          }
           href="/"
+          aria-label="MyGarage UK home"
         >
-          <span className="brand-mark">
-            MG
-          </span>
-
-          <span>
-            MyGarage UK
-          </span>
+          <Image
+            className={
+              styles.brandLogo
+            }
+            src="/branding/mygarage-logo.png"
+            alt="MyGarage UK"
+            width={510}
+            height={170}
+            priority
+          />
         </Link>
 
         <div

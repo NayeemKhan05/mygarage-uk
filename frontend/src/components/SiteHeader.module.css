@@ -1,3 +1,50 @@
+.brandLink {
+  display: flex;
+  align-items: center;
+
+  flex: 0 0 auto;
+
+  text-decoration: none;
+
+  transition:
+    opacity 120ms ease,
+    transform 120ms ease;
+}
+
+
+.brandLink:hover {
+  opacity: 0.94;
+
+  transform:
+    translateY(-1px);
+}
+
+
+.brandLink:focus-visible {
+  outline:
+    2px solid
+    var(--plate);
+
+  outline-offset:
+    5px;
+
+  border-radius:
+    6px;
+}
+
+
+.brandLogo {
+  display: block;
+
+  width: 180px;
+  height: auto;
+
+  object-fit: contain;
+
+  user-select: none;
+}
+
+
 .rightSide {
   height: 100%;
 
@@ -58,6 +105,12 @@
       255,
       0.82
     );
+
+  cursor: pointer;
+
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease;
 }
 
 
@@ -68,6 +121,14 @@
       255,
       255,
       0.06
+    );
+
+  border-color:
+    rgba(
+      255,
+      255,
+      255,
+      0.24
     );
 }
 
@@ -93,8 +154,32 @@
 
 
 @media (
+  max-width: 1050px
+) {
+  .brandLogo {
+    width: 160px;
+  }
+
+
+  .rightSide {
+    gap: 12px;
+  }
+
+
+  .userEmail {
+    max-width: 130px;
+  }
+}
+
+
+@media (
   max-width: 900px
 ) {
+  .brandLogo {
+    width: 150px;
+  }
+
+
   .userEmail {
     display: none;
   }
@@ -104,6 +189,11 @@
 @media (
   max-width: 760px
 ) {
+  .brandLogo {
+    width: 140px;
+  }
+
+
   .rightSide {
     gap: 7px;
   }
@@ -123,6 +213,16 @@
 @media (
   max-width: 540px
 ) {
+  .brandLink {
+    align-self: flex-start;
+  }
+
+
+  .brandLogo {
+    width: 145px;
+  }
+
+
   .rightSide {
     width: 100%;
     height: auto;
