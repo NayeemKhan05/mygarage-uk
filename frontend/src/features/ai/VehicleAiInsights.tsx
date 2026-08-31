@@ -4,6 +4,7 @@ import {
   FormEvent,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 
@@ -73,6 +74,17 @@ export default function VehicleAiInsights({
       AiQuestionResponse | null
     >(null);
 
+  const [
+    showReadyNotification,
+    setShowReadyNotification,
+  ] =
+    useState(false);
+
+  const insightsRef =
+    useRef<
+      HTMLElement | null
+    >(null);
+
 
   const snapshotKey =
     useMemo(
@@ -116,8 +128,40 @@ export default function VehicleAiInsights({
       null
     );
 
+    setShowReadyNotification(
+      false
+    );
+
   }, [
     snapshotKey,
+  ]);
+
+
+  useEffect(() => {
+    if (
+      !showReadyNotification
+    ) {
+      return;
+    }
+
+    const timeout =
+      window.setTimeout(
+        () => {
+          setShowReadyNotification(
+            false
+          );
+        },
+        12000,
+      );
+
+    return () => {
+      window.clearTimeout(
+        timeout
+      );
+    };
+
+  }, [
+    showReadyNotification,
   ]);
 
 
@@ -134,6 +178,10 @@ export default function VehicleAiInsights({
       null
     );
 
+    setShowReadyNotification(
+      false
+    );
+
     try {
       const result =
         await generateVehicleInsights(
@@ -142,6 +190,10 @@ export default function VehicleAiInsights({
 
       setInsights(
         result
+      );
+
+      setShowReadyNotification(
+        true
       );
 
     } catch (
@@ -240,127 +292,149 @@ export default function VehicleAiInsights({
   }
 
 
+  function handleViewInsights() {
+    setShowReadyNotification(
+      false
+    );
+
+    insightsRef
+      .current
+      ?.scrollIntoView({
+        behavior:
+          "smooth",
+
+        block:
+          "start",
+      });
+  }
+
+
   return (
-    <section
-      className={
-        styles.panel
-      }
-    >
-      <div
+    <>
+      <section
         className={
-          styles.header
+          styles.panel
         }
       >
         <div
           className={
-            styles.headerContent
+            styles.header
           }
         >
           <div
             className={
-              styles.titleRow
+              styles.headerContent
             }
           >
-            <span
+            <div
               className={
-                styles.mark
+                styles.titleRow
               }
-              aria-hidden="true"
             >
-              ✦
-            </span>
-
-            <div>
               <span
                 className={
-                  styles.eyebrow
+                  styles.mark
                 }
+                aria-hidden="true"
               >
-                Vehicle history analysis
+                ✦
               </span>
 
-              <h2>
-                AI Vehicle Insights
-              </h2>
+              <div>
+                <span
+                  className={
+                    styles.eyebrow
+                  }
+                >
+                  Vehicle history analysis
+                </span>
+
+                <h2>
+                  AI Vehicle Insights
+                </h2>
+              </div>
             </div>
+
+            <p
+              className={
+                styles.description
+              }
+            >
+              Understand this vehicle&apos;s
+              recent history at a glance.
+              MyGarage reviews MOT records
+              from the last 5 years to
+              highlight recurring issues,
+              failures and mileage patterns.
+            </p>
           </div>
 
-          <p
+          <button
             className={
-              styles.description
+              styles.generateButton
+            }
+            type="button"
+            disabled={
+              loading
+            }
+            onClick={
+              handleGenerate
             }
           >
-            Understand this vehicle&apos;s
-            recent history at a glance.
-            MyGarage reviews MOT records
-            from the last 5 years to
-            highlight recurring issues,
-            failures and mileage patterns.
-          </p>
+            {loading
+              ? "Analysing..."
+              : insights
+                ? "Refresh analysis"
+                : "Analyse recent MOTs"}
+          </button>
         </div>
 
-        <button
-          className={
-            styles.generateButton
-          }
-          type="button"
-          disabled={
-            loading
-          }
-          onClick={
-            handleGenerate
-          }
-        >
-          {loading
-            ? "Analysing..."
-            : insights
-              ? "Refresh analysis"
-              : "Analyse recent MOTs"}
-        </button>
-      </div>
-
-      {loading && (
-        <div
-          className={
-            styles.loading
-          }
-        >
+        {loading && (
           <div
-            className="loader"
-          />
+            className={
+              styles.loading
+            }
+          >
+            <div
+              className="loader"
+            />
 
-          <div>
-            <strong>
-              Reviewing recent MOT history
-            </strong>
+            <div>
+              <strong>
+                Reviewing recent MOT history
+              </strong>
 
-            <span>
-              Looking for recurring issues,
-              failures and mileage patterns.
-            </span>
+              <span>
+                You can keep browsing while
+                MyGarage analyses the vehicle.
+                We&apos;ll let you know when
+                the results are ready.
+              </span>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {error && (
-        <div
-          className={
-            styles.error
-          }
-          role="alert"
-        >
-          {error}
-        </div>
-      )}
+        {error && (
+          <div
+            className={
+              styles.error
+            }
+            role="alert"
+          >
+            {error}
+          </div>
+        )}
 
-      {insights
-        && !loading && (
+        {insights && (
           <div
             className={
               styles.content
             }
           >
             <section
+              ref={
+                insightsRef
+              }
               className={
                 styles.ratingSection
               }
@@ -398,6 +472,7 @@ export default function VehicleAiInsights({
                           .rating
                           .score
                       }
+
                       <small>
                         /100
                       </small>
@@ -956,6 +1031,53 @@ export default function VehicleAiInsights({
             </p>
           </div>
         )}
-    </section>
+      </section>
+
+      {showReadyNotification
+        && insights && (
+          <button
+            className={
+              styles.readyToast
+            }
+            type="button"
+            onClick={
+              handleViewInsights
+            }
+            aria-live="polite"
+          >
+            <span
+              className={
+                styles.readyIcon
+              }
+              aria-hidden="true"
+            >
+              ✓
+            </span>
+
+            <span
+              className={
+                styles.readyContent
+              }
+            >
+              <strong>
+                Your vehicle analysis is ready
+              </strong>
+
+              <span>
+                View the latest rating and
+                insights.
+              </span>
+            </span>
+
+            <span
+              className={
+                styles.readyAction
+              }
+            >
+              View
+            </span>
+          </button>
+        )}
+    </>
   );
 }
