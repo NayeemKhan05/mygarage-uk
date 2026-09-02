@@ -36,6 +36,8 @@ import {
   buildLiveAiSnapshot,
 } from "../ai/buildAiVehicleSnapshot";
 
+import HomeMarketing from "../home/HomeMarketing";
+
 import MileageChart from "./MileageChart";
 import MotHistory from "./MotHistory";
 
@@ -96,9 +98,9 @@ export default function VehicleChecker({
     useAuth();
 
   const lastAutoCheck =
-    useRef<
-      string | null
-    >(null);
+    useRef<string | null>(
+      null,
+    );
 
   const [
     registration,
@@ -117,9 +119,10 @@ export default function VehicleChecker({
     setVehicle,
   ] =
     useState<
-      VehicleCheckResponse
-      | null
-    >(null);
+      VehicleCheckResponse | null
+    >(
+      null,
+    );
 
   const [
     loading,
@@ -137,24 +140,24 @@ export default function VehicleChecker({
     setAddingToGarage,
   ] =
     useState(
-      false
+      false,
     );
 
   const [
     error,
     setError,
   ] =
-    useState<
-      string | null
-    >(null);
+    useState<string | null>(
+      null,
+    );
 
   const [
     notice,
     setNotice,
   ] =
-    useState<
-      string | null
-    >(null);
+    useState<string | null>(
+      null,
+    );
 
 
   const runVehicleCheck =
@@ -178,19 +181,19 @@ export default function VehicleChecker({
         }
 
         setLoading(
-          true
+          true,
         );
 
         setError(
-          null
+          null,
         );
 
         setNotice(
-          null
+          null,
         );
 
         setVehicle(
-          null
+          null,
         );
 
         try {
@@ -200,7 +203,7 @@ export default function VehicleChecker({
             );
 
           setVehicle(
-            result
+            result,
           );
 
           setRegistration(
@@ -247,7 +250,7 @@ export default function VehicleChecker({
 
         } finally {
           setLoading(
-            false
+            false,
           );
         }
       },
@@ -295,14 +298,12 @@ export default function VehicleChecker({
 
   async function handleSearch(
     event:
-      FormEvent<
-        HTMLFormElement
-      >,
+      FormEvent<HTMLFormElement>,
   ) {
     event.preventDefault();
 
     await runVehicleCheck(
-      registration
+      registration,
     );
   }
 
@@ -314,7 +315,7 @@ export default function VehicleChecker({
 
     if (!user) {
       router.push(
-        "/login"
+        "/login",
       );
 
       return;
@@ -327,15 +328,15 @@ export default function VehicleChecker({
     }
 
     setAddingToGarage(
-      true
+      true,
     );
 
     setError(
-      null
+      null,
     );
 
     setNotice(
-      null
+      null,
     );
 
     try {
@@ -406,7 +407,7 @@ export default function VehicleChecker({
 
     } finally {
       setAddingToGarage(
-        false
+        false,
       );
     }
   }
@@ -473,22 +474,26 @@ export default function VehicleChecker({
 
       <main>
         {!resultOnly && (
-          <section className="hero">
+          <section
+            className="hero"
+            id="vehicle-check"
+          >
             <div className="hero-inner">
               <span className="hero-eyebrow">
-                UK vehicle history
+                Vehicle history &amp; ownership
               </span>
 
               <h1>
-                Know what&apos;s happened
+                Know the history.
                 <br />
-                to a car before you rely on it.
+                Stay ahead of what&apos;s next.
               </h1>
 
               <p className="hero-copy">
                 Check MOT history, mileage and
-                recorded defects from one
-                registration number.
+                recorded defects, then use
+                MyGarage to understand and
+                manage your vehicle.
               </p>
 
               <form
@@ -565,57 +570,7 @@ export default function VehicleChecker({
         {!resultOnly
           && !vehicle
           && !loading && (
-            <section className="features">
-              <div className="features-inner">
-                <div className="feature-card">
-                  <span className="feature-number">
-                    01
-                  </span>
-
-                  <h2>
-                    MOT history
-                  </h2>
-
-                  <p>
-                    See previous tests,
-                    failures, advisories and
-                    defects in one timeline.
-                  </p>
-                </div>
-
-                <div className="feature-card">
-                  <span className="feature-number">
-                    02
-                  </span>
-
-                  <h2>
-                    Mileage
-                  </h2>
-
-                  <p>
-                    Follow recorded odometer
-                    readings across the life
-                    of the vehicle.
-                  </p>
-                </div>
-
-                <div className="feature-card">
-                  <span className="feature-number">
-                    03
-                  </span>
-
-                  <h2>
-                    My Vehicles
-                  </h2>
-
-                  <p>
-                    Sign in and save your own
-                    vehicles so their history
-                    is always easy to find.
-                  </p>
-                </div>
-              </div>
-            </section>
+            <HomeMarketing />
           )}
 
         {loading && (
