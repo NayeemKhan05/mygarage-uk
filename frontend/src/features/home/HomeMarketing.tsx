@@ -47,11 +47,13 @@ function VehicleIcon() {
       <path d="M8 11l1.5-3h5L16 11" />
       <path d="M6 16v2" />
       <path d="M18 16v2" />
+
       <circle
         cx="8"
         cy="16"
         r="1"
       />
+
       <circle
         cx="16"
         cy="16"
@@ -192,30 +194,42 @@ export default function HomeMarketing() {
             >
               <div
                 className={
-                  styles.iconBox
+                  styles.primaryCardHeader
                 }
               >
-                <HistoryIcon />
+                <div
+                  className={
+                    styles.iconBox
+                  }
+                >
+                  <HistoryIcon />
+                </div>
+
+                <span
+                  className={
+                    styles.featureCategory
+                  }
+                >
+                  Vehicle history
+                </span>
               </div>
 
-              <span
+              <div
                 className={
-                  styles.cardNumber
+                  styles.primaryCardContent
                 }
               >
-                01
-              </span>
+                <h3>
+                  Complete MOT history
+                </h3>
 
-              <h3>
-                Complete MOT history
-              </h3>
-
-              <p>
-                Review passes, failures,
-                advisories and recorded
-                defects in one chronological
-                history.
-              </p>
+                <p>
+                  Review passes, failures,
+                  advisories and recorded
+                  defects in one chronological
+                  history.
+                </p>
+              </div>
             </article>
 
             <article
@@ -225,73 +239,87 @@ export default function HomeMarketing() {
             >
               <div
                 className={
-                  styles.iconBox
+                  styles.primaryCardHeader
                 }
               >
-                <MileageIcon />
+                <div
+                  className={
+                    styles.iconBox
+                  }
+                >
+                  <MileageIcon />
+                </div>
+
+                <span
+                  className={
+                    styles.featureCategory
+                  }
+                >
+                  Mileage tracking
+                </span>
               </div>
 
-              <span
+              <div
                 className={
-                  styles.cardNumber
+                  styles.primaryCardContent
                 }
               >
-                02
-              </span>
+                <h3>
+                  Mileage trends
+                </h3>
 
-              <h3>
-                Mileage trends
-              </h3>
-
-              <p>
-                Follow recorded odometer
-                readings visually and spot
-                how mileage has changed
-                between MOTs.
-              </p>
+                <p>
+                  Follow recorded odometer
+                  readings visually and spot
+                  how mileage has changed
+                  between MOTs.
+                </p>
+              </div>
             </article>
 
             <article
-              className={`${styles.primaryCard} ${styles.aiCard}`}
+              className={
+                styles.primaryCard
+              }
             >
               <div
-                className={`${styles.iconBox} ${styles.aiIconBox}`}
+                className={
+                  styles.primaryCardHeader
+                }
               >
-                <AiIcon />
+                <div
+                  className={
+                    styles.iconBox
+                  }
+                >
+                  <AiIcon />
+                </div>
+
+                <span
+                  className={
+                    styles.featureCategory
+                  }
+                >
+                  Vehicle insights
+                </span>
               </div>
 
               <div
                 className={
-                  styles.cardTop
+                  styles.primaryCardContent
                 }
               >
-                <span
-                  className={
-                    styles.cardNumber
-                  }
-                >
-                  03
-                </span>
+                <h3>
+                  Make sense of the history
+                </h3>
 
-                <span
-                  className={
-                    styles.newBadge
-                  }
-                >
-                  AI insights
-                </span>
+                <p>
+                  Analyse recent MOT records,
+                  identify recurring concerns
+                  and get a clear MOT-history
+                  rating.
+                </p>
               </div>
-
-              <h3>
-                Make sense of the history
-              </h3>
-
-              <p>
-                Analyse recent MOT records,
-                identify recurring concerns
-                and get a clear MOT-history
-                rating out of 100.
-              </p>
             </article>
           </div>
         </div>
@@ -355,7 +383,11 @@ export default function HomeMarketing() {
                 <VehicleIcon />
               </div>
 
-              <div>
+              <div
+                className={
+                  styles.featureText
+                }
+              >
                 <span
                   className={
                     styles.featureLabel
@@ -389,6 +421,7 @@ export default function HomeMarketing() {
                 {user
                   ? "Open My Vehicles"
                   : "Sign in to start"}
+
                 <span
                   aria-hidden="true"
                 >
@@ -404,19 +437,25 @@ export default function HomeMarketing() {
             >
               <div
                 className={
-                  styles.featureIcon
+                  styles.featureCardTop
                 }
               >
-                <ServiceIcon />
-              </div>
+                <div
+                  className={
+                    styles.featureIcon
+                  }
+                >
+                  <ServiceIcon />
+                </div>
 
-              <span
-                className={
-                  styles.featureLabel
-                }
-              >
-                Service history
-              </span>
+                <span
+                  className={
+                    styles.featureLabel
+                  }
+                >
+                  Service history
+                </span>
+              </div>
 
               <h3>
                 Keep a record of the work
@@ -436,19 +475,25 @@ export default function HomeMarketing() {
             >
               <div
                 className={
-                  styles.featureIcon
+                  styles.featureCardTop
                 }
               >
-                <ReminderIcon />
-              </div>
+                <div
+                  className={
+                    styles.featureIcon
+                  }
+                >
+                  <ReminderIcon />
+                </div>
 
-              <span
-                className={
-                  styles.featureLabel
-                }
-              >
-                Maintenance & reminders
-              </span>
+                <span
+                  className={
+                    styles.featureLabel
+                  }
+                >
+                  Maintenance &amp; reminders
+                </span>
+              </div>
 
               <h3>
                 Know what needs doing next
@@ -469,19 +514,25 @@ export default function HomeMarketing() {
             >
               <div
                 className={
-                  styles.featureIcon
+                  styles.featureCardTop
                 }
               >
-                <ChecksIcon />
-              </div>
+                <div
+                  className={
+                    styles.featureIcon
+                  }
+                >
+                  <ChecksIcon />
+                </div>
 
-              <span
-                className={
-                  styles.featureLabel
-                }
-              >
-                My Checks
-              </span>
+                <span
+                  className={
+                    styles.featureLabel
+                  }
+                >
+                  My Checks
+                </span>
+              </div>
 
               <h3>
                 Come back to vehicles you checked
@@ -502,19 +553,25 @@ export default function HomeMarketing() {
             >
               <div
                 className={
-                  styles.featureIcon
+                  styles.featureCardTop
                 }
               >
-                <ReceiptIcon />
-              </div>
+                <div
+                  className={
+                    styles.featureIcon
+                  }
+                >
+                  <ReceiptIcon />
+                </div>
 
-              <span
-                className={
-                  styles.featureLabel
-                }
-              >
-                Receipts & records
-              </span>
+                <span
+                  className={
+                    styles.featureLabel
+                  }
+                >
+                  Receipts &amp; records
+                </span>
+              </div>
 
               <h3>
                 Keep the paperwork with the car
@@ -618,6 +675,7 @@ export default function HomeMarketing() {
               href="#vehicle-check"
             >
               Check a vehicle
+
               <span
                 aria-hidden="true"
               >
@@ -668,6 +726,7 @@ export default function HomeMarketing() {
 
                 <strong>
                   86
+
                   <small>
                     /100
                   </small>
