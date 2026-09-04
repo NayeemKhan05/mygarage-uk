@@ -174,10 +174,9 @@ export default function HomeMarketing() {
             </h2>
 
             <p>
-              Start with a registration and
-              turn public MOT records into a
-              clearer picture of the car&apos;s
-              history, mileage and recurring
+              Enter a registration to see a
+              clearer picture of the vehicle&apos;s
+              MOT history, mileage and recurring
               issues.
             </p>
           </div>
@@ -224,10 +223,9 @@ export default function HomeMarketing() {
                 </h3>
 
                 <p>
-                  Review passes, failures,
+                  See passes, failures,
                   advisories and recorded
-                  defects in one chronological
-                  history.
+                  defects in one clear timeline.
                 </p>
               </div>
             </article>
@@ -269,10 +267,9 @@ export default function HomeMarketing() {
                 </h3>
 
                 <p>
-                  Follow recorded odometer
-                  readings visually and spot
-                  how mileage has changed
-                  between MOTs.
+                  Track recorded mileage
+                  over time and see how it
+                  changes between MOTs.
                 </p>
               </div>
             </article>
@@ -314,10 +311,9 @@ export default function HomeMarketing() {
                 </h3>
 
                 <p>
-                  Analyse recent MOT records,
-                  identify recurring concerns
-                  and get a clear MOT-history
-                  rating.
+                  Review recent MOT records,
+                  spot recurring concerns and
+                  get a clear MOT-history rating.
                 </p>
               </div>
             </article>
@@ -359,11 +355,9 @@ export default function HomeMarketing() {
             </div>
 
             <p>
-              Save the cars you actually
-              own and MyGarage becomes your
-              personal record for maintenance,
-              servicing, reminders and
-              vehicle history.
+              Keep your vehicles, servicing,
+              maintenance and reminders together
+              in one simple digital garage.
             </p>
           </div>
 
@@ -397,14 +391,14 @@ export default function HomeMarketing() {
                 </span>
 
                 <h3>
-                  Your garage, always up to date
+                  Your vehicles, all in one place
                 </h3>
 
                 <p>
-                  Save vehicles to your account,
-                  refresh their MOT records and
-                  keep all of their information
-                  together.
+                  Keep each vehicle&apos;s MOT
+                  history, servicing and
+                  maintenance together in one
+                  place.
                 </p>
               </div>
 
@@ -462,7 +456,7 @@ export default function HomeMarketing() {
               </h3>
 
               <p>
-                Log services, repairs,
+                Record services, repairs,
                 replacement parts, mileage,
                 costs and garage details.
               </p>
@@ -501,7 +495,7 @@ export default function HomeMarketing() {
 
               <p>
                 Track maintenance by date
-                or mileage and get notified
+                or mileage and get reminders
                 when work is due soon or
                 overdue.
               </p>
@@ -539,10 +533,9 @@ export default function HomeMarketing() {
               </h3>
 
               <p>
-                Signed-in users can quickly
-                revisit recently checked
-                registrations without adding
-                them to their garage.
+                Quickly return to vehicles
+                you&apos;ve checked before and
+                review their latest history.
               </p>
             </article>
 
@@ -579,8 +572,8 @@ export default function HomeMarketing() {
 
               <p>
                 Attach receipts to service
-                records so evidence of work
-                stays alongside the vehicle
+                records so important paperwork
+                stays with the vehicle&apos;s
                 history.
               </p>
             </article>
@@ -619,11 +612,11 @@ export default function HomeMarketing() {
             </h2>
 
             <p>
-              MyGarage analyses the most
-              recent five years of MOT
-              history to surface patterns
-              that are easy to miss when
-              reading individual tests.
+              MyGarage reviews the last
+              five years of MOT history to
+              highlight recurring issues,
+              failures and mileage patterns
+              that can be easy to miss.
             </p>
 
             <ul
@@ -636,8 +629,8 @@ export default function HomeMarketing() {
                   ✓
                 </span>
 
-                A recent MOT-history rating
-                out of 100
+                A clear recent MOT-history
+                rating out of 100
               </li>
 
               <li>
@@ -646,7 +639,7 @@ export default function HomeMarketing() {
                 </span>
 
                 Recurring defect and advisory
-                areas
+                patterns
               </li>
 
               <li>
@@ -654,8 +647,8 @@ export default function HomeMarketing() {
                   ✓
                 </span>
 
-                Plain-English mileage and MOT
-                analysis
+                Clear mileage and MOT
+                summaries
               </li>
 
               <li>
@@ -664,7 +657,7 @@ export default function HomeMarketing() {
                 </span>
 
                 Ask questions about a
-                vehicle&apos;s recent records
+                vehicle&apos;s recent history
               </li>
             </ul>
 
@@ -789,14 +782,6 @@ export default function HomeMarketing() {
                 </p>
               </div>
             </div>
-
-            <p
-              className={
-                styles.previewNote
-              }
-            >
-              Example interface
-            </p>
           </div>
         </div>
       </section>
@@ -828,8 +813,8 @@ export default function HomeMarketing() {
             <h2
               id="how-heading"
             >
-              From registration to useful
-              vehicle history.
+              From a registration to a
+              clearer vehicle history.
             </h2>
           </div>
 
@@ -857,9 +842,8 @@ export default function HomeMarketing() {
                 </h3>
 
                 <p>
-                  Search a UK registration
-                  without adding the vehicle
-                  to your account.
+                  Enter any UK registration
+                  to view its MOT history.
                 </p>
               </div>
             </div>
@@ -890,9 +874,9 @@ export default function HomeMarketing() {
                 </h3>
 
                 <p>
-                  Explore MOT records,
+                  Review MOT results,
                   mileage, defects and
-                  AI-assisted insights.
+                  AI-powered insights.
                 </p>
               </div>
             </div>
@@ -919,13 +903,13 @@ export default function HomeMarketing() {
 
               <div>
                 <h3>
-                  Save it if it&apos;s yours
+                  Add your vehicle
                 </h3>
 
                 <p>
-                  Add the vehicle to your
-                  garage to unlock servicing,
-                  maintenance and reminders.
+                  Keep servicing,
+                  maintenance and reminders
+                  together in your garage.
                 </p>
               </div>
             </div>
@@ -958,9 +942,9 @@ export default function HomeMarketing() {
             </h2>
 
             <p>
-              Start with a registration.
-              No account is needed to run
-              a vehicle check.
+              Check a vehicle in seconds, or
+              create an account to manage your
+              own garage.
             </p>
           </div>
 

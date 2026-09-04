@@ -173,7 +173,7 @@ export default function VehicleChecker({
           setError(
             (
               "Enter a registration "
-              + "number first."
+              + "number."
             ),
           );
 
@@ -225,25 +225,30 @@ export default function VehicleChecker({
             ) {
               setError(
                 (
-                  "We could not find "
+                  "We couldn’t find "
                   + "a vehicle with "
-                  + "that registration."
+                  + "that registration. "
+                  + "Check the registration "
+                  + "and try again."
                 ),
               );
 
             } else {
               setError(
-                caughtError.message,
+                (
+                  "We couldn’t check "
+                  + "this vehicle right now. "
+                  + "Please try again."
+                ),
               );
             }
 
           } else {
             setError(
               (
-                "We could not connect "
-                + "to MyGarage. Check "
-                + "that the backend is "
-                + "running and try again."
+                "We couldn’t load the "
+                + "vehicle right now. "
+                + "Please try again."
               ),
             );
           }
@@ -356,12 +361,7 @@ export default function VehicleChecker({
       });
 
       setNotice(
-        `Added to My Vehicles. ${result.mot_tests_saved} MOT ${
-          result.mot_tests_saved
-          === 1
-            ? "test was"
-            : "tests were"
-        } newly saved.`,
+        "Added to My Vehicles.",
       );
 
     } catch (
@@ -392,14 +392,18 @@ export default function VehicleChecker({
         instanceof ApiError
       ) {
         setError(
-          caughtError.message,
+          (
+            "We couldn’t add this "
+            + "vehicle right now. "
+            + "Please try again."
+          ),
         );
 
       } else {
         setError(
           (
-            "We could not add the "
-            + "vehicle to My Vehicles. "
+            "We couldn’t add this "
+            + "vehicle right now. "
             + "Please try again."
           ),
         );
@@ -480,7 +484,7 @@ export default function VehicleChecker({
           >
             <div className="hero-inner">
               <span className="hero-eyebrow">
-                Vehicle history &amp; ownership
+                UK vehicle history &amp; ownership
               </span>
 
               <h1>
@@ -491,9 +495,9 @@ export default function VehicleChecker({
 
               <p className="hero-copy">
                 Check MOT history, mileage and
-                recorded defects, then use
-                MyGarage to understand and
-                manage your vehicle.
+                recorded defects, then keep
+                your vehicles, maintenance and
+                reminders in one place.
               </p>
 
               <form
@@ -550,11 +554,6 @@ export default function VehicleChecker({
                 </button>
               </form>
 
-              <p className="search-note">
-                Checking a vehicle does not add
-                it to My Vehicles.
-              </p>
-
               {error && (
                 <div
                   className="message error-message"
@@ -584,12 +583,12 @@ export default function VehicleChecker({
 
                 <div>
                   <strong>
-                    Checking DVSA records
+                    Checking vehicle history
                   </strong>
 
                   <span>
-                    Pulling together the
-                    vehicle&apos;s MOT history.
+                    Fetching the latest
+                    MOT records.
                   </span>
                 </div>
               </div>
@@ -692,12 +691,6 @@ export default function VehicleChecker({
                             ? "Adding..."
                             : "Add to My Vehicles"}
                     </button>
-
-                    {vehicle.in_garage && (
-                      <span className="garage-caption">
-                        Saved to your account
-                      </span>
-                    )}
                   </div>
                 </div>
 
@@ -752,7 +745,7 @@ export default function VehicleChecker({
 
                     ) : (
                       <span className="stat-detail">
-                        No expiry available
+                        Expiry date unavailable
                       </span>
                     )}
                   </div>
@@ -774,13 +767,13 @@ export default function VehicleChecker({
                         ? `Recorded ${formatDate(
                             latestMot.completed_at,
                           )}`
-                        : "No reading available"}
+                        : "Mileage unavailable"}
                     </span>
                   </div>
 
                   <div className="stat-card">
                     <span className="stat-label">
-                      MOT records
+                      MOT history
                     </span>
 
                     <strong>
@@ -791,7 +784,7 @@ export default function VehicleChecker({
                     </strong>
 
                     <span className="stat-detail">
-                      Tests found
+                      Tests on record
                     </span>
                   </div>
                 </div>
@@ -801,7 +794,7 @@ export default function VehicleChecker({
                     <div className="section-heading">
                       <div>
                         <span className="eyebrow">
-                          Latest test
+                          Most recent test
                         </span>
 
                         <h2>
@@ -859,7 +852,7 @@ export default function VehicleChecker({
 
                       <div>
                         <span>
-                          Recorded items
+                          Advisories &amp; defects
                         </span>
 
                         <strong>
@@ -895,10 +888,7 @@ export default function VehicleChecker({
                 />
 
                 <p className="data-note">
-                  MOT information is retrieved
-                  from DVSA records. Checking
-                  a vehicle does not add it to
-                  My Vehicles.
+                  MOT data provided by DVSA.
                 </p>
               </div>
             </section>
@@ -911,7 +901,8 @@ export default function VehicleChecker({
         </span>
 
         <span>
-          Built for UK motorists.
+          Vehicle history and ownership,
+          made simpler.
         </span>
       </footer>
     </div>

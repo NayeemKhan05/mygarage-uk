@@ -49,7 +49,7 @@ function formatCheckedAt(
       date.getTime(),
     )
   ) {
-    return "Unknown";
+    return "Date unavailable";
   }
 
   const formatted =
@@ -195,12 +195,12 @@ export default function ChecksDashboard() {
             instanceof ApiError
           ) {
             setError(
-              caughtError.message,
+              "We couldn’t load your checks. Please try again.",
             );
 
           } else {
             setError(
-              "We could not load your recent checks.",
+              "We couldn’t load your checks. Please try again.",
             );
           }
 
@@ -316,7 +316,7 @@ export default function ChecksDashboard() {
         (
           `${formatRegistration(
             item.registration,
-          )} was added to My Vehicles.`
+          )} added to My Vehicles.`
         ),
       );
 
@@ -328,12 +328,12 @@ export default function ChecksDashboard() {
         instanceof ApiError
       ) {
         setError(
-          caughtError.message,
+          "We couldn’t add this vehicle. Please try again.",
         );
 
       } else {
         setError(
-          "We could not add this vehicle.",
+          "We couldn’t add this vehicle. Please try again.",
         );
       }
 
@@ -354,7 +354,7 @@ export default function ChecksDashboard() {
         (
           `Remove ${formatRegistration(
             item.registration,
-          )} from My Checks?`
+          )} from your recent checks?`
         ),
       );
 
@@ -393,12 +393,12 @@ export default function ChecksDashboard() {
         instanceof ApiError
       ) {
         setError(
-          caughtError.message,
+          "We couldn’t remove this check. Please try again.",
         );
 
       } else {
         setError(
-          "We could not remove this check.",
+          "We couldn’t remove this check. Please try again.",
         );
       }
 
@@ -414,8 +414,7 @@ export default function ChecksDashboard() {
     const confirmed =
       window.confirm(
         (
-          "Clear your entire "
-          + "vehicle check history?"
+          "Clear all recent checks?"
         ),
       );
 
@@ -434,7 +433,7 @@ export default function ChecksDashboard() {
       setSearchQuery("");
 
       setNotice(
-        "Your check history was cleared.",
+        "Recent checks cleared.",
       );
 
     } catch (
@@ -445,12 +444,12 @@ export default function ChecksDashboard() {
         instanceof ApiError
       ) {
         setError(
-          caughtError.message,
+          "We couldn’t clear your checks. Please try again.",
         );
 
       } else {
         setError(
-          "We could not clear your check history.",
+          "We couldn’t clear your checks. Please try again.",
         );
       }
 
@@ -489,7 +488,7 @@ export default function ChecksDashboard() {
             >
               <div className="loader" />
 
-              Loading My Checks...
+              Loading your checks...
             </div>
           </div>
         </main>
@@ -533,11 +532,9 @@ export default function ChecksDashboard() {
               </h1>
 
               <p>
-                Vehicles you&apos;ve recently
-                checked while signed in.
-                Search history stays separate
-                from My Vehicles until you
-                choose to save a car.
+                Quickly return to vehicles
+                you&apos;ve checked before and
+                view their latest history.
               </p>
             </div>
           </div>
@@ -571,7 +568,7 @@ export default function ChecksDashboard() {
             >
               <div className="loader" />
 
-              Loading your vehicle checks...
+              Loading your checks...
             </div>
 
           ) : checks.length === 0 ? (
@@ -589,13 +586,13 @@ export default function ChecksDashboard() {
               </div>
 
               <h2>
-                No vehicle checks yet
+                No recent checks yet
               </h2>
 
               <p>
-                Search a registration while
-                signed in and it will appear
-                here automatically.
+                Vehicles you check will appear
+                here so you can easily
+                return to them later.
               </p>
 
               <Link
@@ -660,7 +657,7 @@ export default function ChecksDashboard() {
                         styles.searchInput
                       }
                       type="search"
-                      placeholder="Search reg, make or model"
+                      placeholder="Search registration, make or model"
                       value={
                         searchQuery
                       }
@@ -798,7 +795,7 @@ export default function ChecksDashboard() {
                             {vehicleMeta(
                               item,
                             )
-                              || "No additional details"}
+                              || "Details unavailable"}
                           </span>
                         </div>
 
@@ -844,7 +841,7 @@ export default function ChecksDashboard() {
                           >
                             {item.in_garage
                               ? "In My Vehicles"
-                              : "Not saved"}
+                              : "Not in My Vehicles"}
                           </span>
                         </div>
 
@@ -944,10 +941,10 @@ export default function ChecksDashboard() {
                                   + formatRegistration(
                                     item.registration,
                                   )
-                                  + " from My Checks"
+                                  + " from recent checks"
                                 )
                               }
-                              title="Remove from My Checks"
+                              title="Remove from recent checks"
                             >
                               {deletingId
                                 === item.id
@@ -972,7 +969,8 @@ export default function ChecksDashboard() {
         </span>
 
         <span>
-          Built for UK motorists.
+          Vehicle history and ownership,
+          made simpler.
         </span>
       </footer>
     </div>
