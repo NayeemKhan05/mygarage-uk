@@ -104,7 +104,7 @@ export default function VehicleCard({
           <span className={styles.metricDetail}>
             {motStatus.expiryDate
               ? motStatus.timeRemainingLabel
-              : "No MOT expiry available"}
+              : "MOT expiry unavailable"}
           </span>
 
           {motStatus.expiryDate && (
@@ -131,11 +131,11 @@ export default function VehicleCard({
 
           <span className={styles.metricDetail}>
             {motHistory.length === 0
-              ? "No MOT records saved"
+              ? "No MOT history available"
               : `${motHistory.length} MOT ${
                   motHistory.length === 1
-                    ? "record"
-                    : "records"
+                    ? "test"
+                    : "tests"
                 }`}
           </span>
         </div>
@@ -147,6 +147,7 @@ export default function VehicleCard({
           href={`/vehicles/${vehicle.id}`}
         >
           View vehicle
+
           <span aria-hidden="true">
             →
           </span>

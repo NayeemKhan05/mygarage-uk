@@ -153,12 +153,20 @@ export default function RemindersDashboard() {
             instanceof ApiError
           ) {
             setError(
-              caughtError.message,
+              (
+                "We couldn’t load your "
+                + "reminders right now. "
+                + "Please try again."
+              ),
             );
 
           } else {
             setError(
-              "We could not load your reminders.",
+              (
+                "We couldn’t load your "
+                + "reminders right now. "
+                + "Please try again."
+              ),
             );
           }
 
@@ -236,12 +244,20 @@ export default function RemindersDashboard() {
         instanceof ApiError
       ) {
         setError(
-          caughtError.message,
+          (
+            "We couldn’t save your "
+            + "reminder settings. "
+            + "Please try again."
+          ),
         );
 
       } else {
         setError(
-          "We could not save your reminder settings.",
+          (
+            "We couldn’t save your "
+            + "reminder settings. "
+            + "Please try again."
+          ),
         );
       }
 
@@ -283,12 +299,18 @@ export default function RemindersDashboard() {
         instanceof ApiError
       ) {
         setError(
-          caughtError.message,
+          (
+            "We couldn’t dismiss this "
+            + "reminder. Please try again."
+          ),
         );
 
       } else {
         setError(
-          "We could not dismiss this reminder.",
+          (
+            "We couldn’t dismiss this "
+            + "reminder. Please try again."
+          ),
         );
       }
 
@@ -320,12 +342,20 @@ export default function RemindersDashboard() {
         instanceof ApiError
       ) {
         setError(
-          caughtError.message,
+          (
+            "We couldn’t restore your "
+            + "dismissed reminders. "
+            + "Please try again."
+          ),
         );
 
       } else {
         setError(
-          "We could not restore dismissed reminders.",
+          (
+            "We couldn’t restore your "
+            + "dismissed reminders. "
+            + "Please try again."
+          ),
         );
       }
 
@@ -420,9 +450,8 @@ export default function RemindersDashboard() {
             </h1>
 
             <p>
-              Keep track of approaching MOT
-              deadlines and maintenance that
-              is due by date or mileage.
+              Stay ahead of upcoming MOT
+              and maintenance deadlines.
             </p>
           </div>
 
@@ -532,7 +561,7 @@ export default function RemindersDashboard() {
 
                       <p>
                         Choose which reminders
-                        MyGarage should surface.
+                        you want to receive.
                       </p>
                     </div>
                   </div>
@@ -557,8 +586,9 @@ export default function RemindersDashboard() {
                         </strong>
 
                         <span>
-                          Warn when an MOT is
-                          approaching or expired.
+                          Get a reminder before
+                          an MOT is due and if
+                          it expires.
                         </span>
                       </div>
 
@@ -596,8 +626,9 @@ export default function RemindersDashboard() {
                         </strong>
 
                         <span>
-                          Use maintenance dates
-                          and mileage targets.
+                          Get a reminder when
+                          scheduled maintenance
+                          is approaching.
                         </span>
                       </div>
 
@@ -627,8 +658,7 @@ export default function RemindersDashboard() {
                       }
                     >
                       <span>
-                        Warn this many days
-                        before due
+                        Days before due
                       </span>
 
                       <input
@@ -661,8 +691,7 @@ export default function RemindersDashboard() {
                       }
                     >
                       <span>
-                        Warn this many miles
-                        before due
+                        Miles before due
                       </span>
 
                       <input
@@ -743,8 +772,9 @@ export default function RemindersDashboard() {
                     Everything looks up to date
                   </strong>
 
-                  No MOT or maintenance reminders
-                  currently need your attention.
+                  You don&apos;t have any
+                  reminders that need attention
+                  right now.
                 </div>
 
               ) : (
@@ -880,7 +910,8 @@ export default function RemindersDashboard() {
         </span>
 
         <span>
-          Built for UK motorists.
+          Vehicle history and ownership,
+          made simpler.
         </span>
       </footer>
     </div>

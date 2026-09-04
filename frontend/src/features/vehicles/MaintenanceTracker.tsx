@@ -107,7 +107,7 @@ function statusLabel(
     return "Overdue";
   }
 
-  return "Unknown";
+  return "Not scheduled";
 }
 
 
@@ -188,11 +188,19 @@ export default function MaintenanceTracker({
         ApiError
       ) {
         setError(
-          caughtError.message,
+          (
+            "We couldn’t load your "
+            + "maintenance right now. "
+            + "Please try again."
+          ),
         );
       } else {
         setError(
-          "We could not load maintenance items.",
+          (
+            "We couldn’t load your "
+            + "maintenance right now. "
+            + "Please try again."
+          ),
         );
       }
 
@@ -365,11 +373,19 @@ export default function MaintenanceTracker({
         ApiError
       ) {
         setError(
-          caughtError.message,
+          (
+            "We couldn’t save this "
+            + "maintenance item. "
+            + "Please try again."
+          ),
         );
       } else {
         setError(
-          "We could not save the maintenance item.",
+          (
+            "We couldn’t save this "
+            + "maintenance item. "
+            + "Please try again."
+          ),
         );
       }
 
@@ -386,7 +402,7 @@ export default function MaintenanceTracker({
       window.confirm(
         (
           `Remove "${item.name}" `
-          + "from maintenance tracking?"
+          + "from maintenance?"
         ),
       );
 
@@ -412,11 +428,19 @@ export default function MaintenanceTracker({
         ApiError
       ) {
         setError(
-          caughtError.message,
+          (
+            "We couldn’t remove this "
+            + "maintenance item. "
+            + "Please try again."
+          ),
         );
       } else {
         setError(
-          "We could not remove the maintenance item.",
+          (
+            "We couldn’t remove this "
+            + "maintenance item. "
+            + "Please try again."
+          ),
         );
       }
     }
@@ -461,13 +485,13 @@ export default function MaintenanceTracker({
           </span>
 
           <h2>
-            Maintenance tracker
+            Maintenance
           </h2>
 
           <p>
-            Track what has been changed and
-            when the next maintenance item is
-            due by date or mileage.
+            Keep track of routine maintenance
+            by date or mileage and see
+            what&apos;s due next.
           </p>
         </div>
 
@@ -476,7 +500,7 @@ export default function MaintenanceTracker({
           type="button"
           onClick={startCreate}
         >
-          + Track maintenance
+          + Add maintenance item
         </button>
       </div>
 
@@ -534,7 +558,7 @@ export default function MaintenanceTracker({
               </strong>
 
               <span>
-                Unknown
+                Not scheduled
               </span>
             </div>
           </div>
@@ -548,7 +572,7 @@ export default function MaintenanceTracker({
           <h3 className={styles.formTitle}>
             {editingId
               ? "Edit maintenance item"
-              : "Track maintenance"}
+              : "Add maintenance item"}
           </h3>
 
           <div className={styles.formGrid}>
@@ -577,18 +601,19 @@ export default function MaintenanceTracker({
               <span>
                 Category
               </span>
-            <select
+
+              <select
                 value={form.category}
                 onChange={(event) =>
-                setForm({
+                  setForm({
                     ...form,
 
                     category: (
-                    event.target.value as MaintenanceCategory
+                      event.target.value as MaintenanceCategory
                     ),
-                })
+                  })
                 }
-            >
+              >
                 <option value="oil">
                   Oil
                 </option>
@@ -738,7 +763,7 @@ export default function MaintenanceTracker({
                       event.target.value,
                   })
                 }
-                placeholder="Brand, specification, mechanic advice, anything else..."
+                placeholder="Brand, specification or any other details..."
               />
             </label>
           </div>
@@ -774,10 +799,9 @@ export default function MaintenanceTracker({
 
       ) : items.length === 0 ? (
         <div className={styles.empty}>
-          Nothing is being tracked yet.
-          Add engine oil, tyres, brake pads,
-          fluids or anything else you want
-          MyGarage to keep an eye on.
+          Nothing scheduled yet.
+          Add routine maintenance to keep
+          track of what&apos;s due next.
         </div>
 
       ) : (

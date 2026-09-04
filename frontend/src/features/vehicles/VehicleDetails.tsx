@@ -194,12 +194,18 @@ export default function VehicleDetails() {
           ApiError
         ) {
           setError(
-            caughtError.message,
+            (
+              "We couldn’t load this vehicle "
+              + "right now. Please try again."
+            ),
           );
 
         } else {
           setError(
-            "We could not load this vehicle. Please try again.",
+            (
+              "We couldn’t load this vehicle "
+              + "right now. Please try again."
+            ),
           );
         }
 
@@ -273,12 +279,18 @@ export default function VehicleDetails() {
         ApiError
       ) {
         setError(
-          caughtError.message,
+          (
+            "We couldn’t update the MOT "
+            + "history. Please try again."
+          ),
         );
 
       } else {
         setError(
-          "We could not refresh the MOT history. Please try again.",
+          (
+            "We couldn’t update the MOT "
+            + "history. Please try again."
+          ),
         );
       }
 
@@ -322,12 +334,18 @@ export default function VehicleDetails() {
         ApiError
       ) {
         setError(
-          caughtError.message,
+          (
+            "We couldn’t remove this vehicle. "
+            + "Please try again."
+          ),
         );
 
       } else {
         setError(
-          "We could not remove this vehicle. Please try again.",
+          (
+            "We couldn’t remove this vehicle. "
+            + "Please try again."
+          ),
         );
       }
 
@@ -358,8 +376,8 @@ export default function VehicleDetails() {
                 </strong>
 
                 <span>
-                  Getting your saved MOT
-                  history and vehicle details.
+                  Loading vehicle details
+                  and MOT history.
                 </span>
               </div>
             </div>
@@ -501,8 +519,8 @@ export default function VehicleDetails() {
                 onClick={handleRefresh}
               >
                 {refreshing
-                  ? "Refreshing..."
-                  : "Refresh MOT data"}
+                  ? "Updating..."
+                  : "Update MOT history"}
               </button>
 
               <button
@@ -513,7 +531,7 @@ export default function VehicleDetails() {
               >
                 {deleting
                   ? "Removing..."
-                  : "Remove vehicle"}
+                  : "Remove from My Vehicles"}
               </button>
             </div>
           </div>
@@ -586,7 +604,7 @@ export default function VehicleDetails() {
 
             <div className={styles.summaryCard}>
               <span className={styles.metricLabel}>
-                MOT records
+                MOT history
               </span>
 
               <strong className={styles.bigValue}>
@@ -594,7 +612,7 @@ export default function VehicleDetails() {
               </strong>
 
               <span className={styles.metricSubtle}>
-                Tests saved
+                Tests on record
               </span>
             </div>
           </div>
@@ -662,7 +680,7 @@ export default function VehicleDetails() {
 
                 <div>
                   <span>
-                    Recorded items
+                    Advisories &amp; defects
                   </span>
 
                   <strong>
@@ -686,10 +704,7 @@ export default function VehicleDetails() {
           />
 
           <p className="data-note">
-            MOT information is saved from DVSA
-            records. Service and maintenance
-            information is private to your
-            MyGarage account.
+            MOT data provided by DVSA.
           </p>
         </div>
       </main>
@@ -700,7 +715,8 @@ export default function VehicleDetails() {
         </span>
 
         <span>
-          Built for UK motorists.
+          Vehicle history and ownership,
+          made simpler.
         </span>
       </footer>
     </div>

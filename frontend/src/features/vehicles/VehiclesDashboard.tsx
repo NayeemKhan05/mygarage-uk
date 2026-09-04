@@ -124,6 +124,7 @@ export default function VehiclesDashboard() {
             summaries,
           );
         }
+
       } catch (caughtError) {
         if (cancelled) {
           return;
@@ -134,13 +135,23 @@ export default function VehiclesDashboard() {
           ApiError
         ) {
           setError(
-            caughtError.message,
+            (
+              "We couldn’t load your "
+              + "vehicles right now. "
+              + "Please try again."
+            ),
           );
+
         } else {
           setError(
-            "We could not load your vehicles. Please try again.",
+            (
+              "We couldn’t load your "
+              + "vehicles right now. "
+              + "Please try again."
+            ),
           );
         }
+
       } finally {
         if (!cancelled) {
           setLoading(false);
@@ -154,6 +165,7 @@ export default function VehiclesDashboard() {
     return () => {
       cancelled = true;
     };
+
   }, [
     authLoading,
     user,
@@ -182,7 +194,7 @@ export default function VehiclesDashboard() {
                 </strong>
 
                 <span>
-                  Checking your account.
+                  Loading your garage.
                 </span>
               </div>
             </div>
@@ -208,14 +220,14 @@ export default function VehiclesDashboard() {
               </span>
 
               <h1>
-                Your cars, all in
+                Your vehicles, all in
                 one place.
               </h1>
 
               <p>
-                Keep an eye on MOT history,
-                mileage and vehicle information
-                for every car you&apos;ve saved.
+                Keep track of MOT history,
+                mileage and key details for
+                every vehicle in your garage.
               </p>
             </div>
 
@@ -237,7 +249,7 @@ export default function VehiclesDashboard() {
                 </strong>
 
                 <span>
-                  Getting your saved details.
+                  Loading vehicle details.
                 </span>
               </div>
             </div>
@@ -276,9 +288,9 @@ export default function VehiclesDashboard() {
                 </h2>
 
                 <p>
-                  Check a registration from the
-                  homepage, then choose Add to
-                  My Vehicles.
+                  Check a vehicle and add it
+                  to My Vehicles to start
+                  building your garage.
                 </p>
 
                 <Link
@@ -301,8 +313,8 @@ export default function VehiclesDashboard() {
 
                   <span>
                     {vehicles.length === 1
-                      ? "vehicle saved"
-                      : "vehicles saved"}
+                      ? "vehicle"
+                      : "vehicles"}
                   </span>
                 </div>
 
@@ -331,7 +343,8 @@ export default function VehiclesDashboard() {
         </span>
 
         <span>
-          Built for UK motorists.
+          Vehicle history and ownership,
+          made simpler.
         </span>
       </footer>
     </div>

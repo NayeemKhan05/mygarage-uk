@@ -220,11 +220,19 @@ export default function ServiceHistory({
         ApiError
       ) {
         setError(
-          caughtError.message,
+          (
+            "We couldn’t load the service "
+            + "history right now. "
+            + "Please try again."
+          ),
         );
       } else {
         setError(
-          "We could not load the service history.",
+          (
+            "We couldn’t load the service "
+            + "history right now. "
+            + "Please try again."
+          ),
         );
       }
 
@@ -410,11 +418,17 @@ export default function ServiceHistory({
         ApiError
       ) {
         setError(
-          caughtError.message,
+          (
+            "We couldn’t save this service "
+            + "record. Please try again."
+          ),
         );
       } else {
         setError(
-          "We could not save the service record.",
+          (
+            "We couldn’t save this service "
+            + "record. Please try again."
+          ),
         );
       }
 
@@ -460,11 +474,17 @@ export default function ServiceHistory({
         ApiError
       ) {
         setError(
-          caughtError.message,
+          (
+            "We couldn’t delete this service "
+            + "record. Please try again."
+          ),
         );
       } else {
         setError(
-          "We could not delete the service record.",
+          (
+            "We couldn’t delete this service "
+            + "record. Please try again."
+          ),
         );
       }
     }
@@ -514,11 +534,17 @@ export default function ServiceHistory({
         ApiError
       ) {
         setError(
-          caughtError.message,
+          (
+            "We couldn’t upload this receipt. "
+            + "Please try again."
+          ),
         );
       } else {
         setError(
-          "We could not upload the receipt.",
+          (
+            "We couldn’t upload this receipt. "
+            + "Please try again."
+          ),
         );
       }
 
@@ -562,11 +588,17 @@ export default function ServiceHistory({
         ApiError
       ) {
         setError(
-          caughtError.message,
+          (
+            "We couldn’t delete this receipt. "
+            + "Please try again."
+          ),
         );
       } else {
         setError(
-          "We could not delete the receipt.",
+          (
+            "We couldn’t delete this receipt. "
+            + "Please try again."
+          ),
         );
       }
     }
@@ -578,7 +610,7 @@ export default function ServiceHistory({
       <div className={styles.sectionHeader}>
         <div>
           <span className={styles.eyebrow}>
-            Ownership history
+            Vehicle records
           </span>
 
           <h2>
@@ -586,9 +618,9 @@ export default function ServiceHistory({
           </h2>
 
           <p>
-            Keep your own record of services,
-            repairs, parts and other work carried
-            out on this vehicle.
+            Keep a record of servicing,
+            repairs and parts fitted to
+            this vehicle.
           </p>
         </div>
 
@@ -597,7 +629,7 @@ export default function ServiceHistory({
           type="button"
           onClick={startCreate}
         >
-          + Add service record
+          + Add service or repair
         </button>
       </div>
 
@@ -624,7 +656,7 @@ export default function ServiceHistory({
           <h3 className={styles.formTitle}>
             {editingId
               ? "Edit service record"
-              : "Add service record"}
+              : "Add service or repair"}
           </h3>
 
           <div className={styles.formGrid}>
@@ -655,18 +687,18 @@ export default function ServiceHistory({
                 Category
               </span>
 
-            <select
+              <select
                 value={form.category}
                 onChange={(event) =>
-                setForm({
+                  setForm({
                     ...form,
 
                     category: (
-                    event.target.value as ServiceCategory
+                      event.target.value as ServiceCategory
                     ),
-                })
+                  })
                 }
-            >
+              >
                 <option value="service">
                   Service
                 </option>
@@ -808,7 +840,7 @@ export default function ServiceHistory({
                       event.target.value,
                   })
                 }
-                placeholder="Parts used, work carried out, anything worth remembering..."
+                placeholder="Parts used, work completed or anything else worth noting..."
               />
             </label>
 
@@ -833,8 +865,7 @@ export default function ServiceHistory({
                 />
 
                 <p className={styles.fileHint}>
-                  Optional. PDF, JPG, PNG or WebP,
-                  maximum 10 MB.
+                  PDF or image, up to 10 MB.
                 </p>
               </label>
             )}
@@ -871,9 +902,9 @@ export default function ServiceHistory({
 
       ) : records.length === 0 ? (
         <div className={styles.empty}>
-          No service records yet. Add a service,
-          repair or parts purchase to start
-          building this vehicle&apos;s history.
+          No service history added yet.
+          Add a service or repair to start
+          building this vehicle&apos;s record.
         </div>
 
       ) : (
